@@ -12,7 +12,8 @@
 
 ### Session 2026-06-03
 
-- Q: Require real-time updates for connected viewers? → A: Option A - Require real-time updates for card create/edit/delete so all connected viewers see changes immediately and deletion notifications are delivered instantly.
+* Q: Require real-time updates for connected viewers?
+  A: Option A – Require real-time updates for card create/edit/delete so all connected viewers see changes immediately and deletion notifications are delivered instantly.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -64,23 +65,43 @@ As a user, I want to remove cards that are no longer needed so that the board re
 ### Edge Cases
 
 * What happens when a user attempts to create a card without a title?
+
+  * The system must prevent card creation and display a validation error message.
+
 * What happens when network connectivity is lost during save?
+
+  * The system must display an error message, preserve the user's unsaved changes, and allow the user to retry the operation.
+
 * What happens when multiple edits occur in quick succession?
-* What happens when a card is deleted while another user is currently viewing it? The viewing user must be notified that the card no longer exists and the card view must close gracefully.
+
+  * The system must save the most recent successful edit and ensure all connected users see the latest card state.
+
+* What happens when a card is deleted while another user is currently viewing it?
+
+  * The viewing user must be notified that the card no longer exists and the card view must close gracefully.
+
+* What happens when two users edit the same card at nearly the same time?
+
+  * The system must maintain data consistency and notify affected users if their changes cannot be applied due to a conflict.
+
+* What happens when a user attempts to edit or delete a card that has already been deleted by another user?
+
+  * The system must display an appropriate notification and refresh the board state to reflect the latest data.
+
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 * **FR-001**: System MUST allow users to create cards within any existing column.
-* **FR-002**: System MUST require a title before a card can be created.
+* **FR-002**: System MUST require a title between 1 and 100 characters before a card can be created.
 * **FR-003**: Users MUST be able to view card details.
 * **FR-004**: Users MUST be able to edit card title and description.
 * **FR-005**: System MUST persist card changes after saving.
 * **FR-006**: Users MUST be able to delete cards.
 * **FR-007**: System MUST remove deleted cards from all board views.
 * **FR-008**: System MUST notify users when a card they are viewing has been deleted.
-* **FR-009**: System MUST preserve card data consistency across all users viewing the board by delivering create/edit/delete updates in real time so connected users see changes immediately.
+* **FR-009**: System MUST preserve card data consistency across all users viewing the board by delivering create, edit, and delete updates in real time so connected users see changes immediately.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -102,4 +123,6 @@ As a user, I want to remove cards that are no longer needed so that the board re
 * Authentication and authorization are handled by existing systems.
 * Each card belongs to exactly one column.
 * Network connectivity is available during normal operation.
-* Real-time synchronization mechanisms may be used by other features but are outside the scope of this specification.
+* Real-time updates for card create, edit, and delete operations are part of this feature so connected users see changes immediately.
+* Drag-and-drop functionality is covered by a separate feature specification and is out of scope for Card CRUD.
+* SC-004 will be validated through usability testing and acceptance testing rather than production analytics.

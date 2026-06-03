@@ -1,87 +1,208 @@
-# Implementation Plan: Card CRUD
+Implementation Plan: Card CRUD
 
-**Branch**: `002-card-crud` | **Date**: 2026-06-03 | **Spec**: /Users/deekshithdev/task-board/.specify/specs/card-crud/spec.md
+Branch: 002-card-crud | Date: 2026-06-03 | Spec: .specify/specs/card-crud/spec.md
 
-**Input**: Feature specification from `/Users/deekshithdev/task-board/.specify/specs/card-crud/spec.md`
+Input: Feature specification from .specify/specs/card-crud/spec.md
 
-## Summary
+Summary
 
-Add create/read/update/delete (CRUD) flows for `Card` entities on the task board with immediate real-time propagation to connected viewers. Deliver minimal UI components for create/edit/delete and backend endpoints plus synchronization layer.
+Implement create, view, edit, and delete (CRUD) functionality for Card entities within task board columns. Changes must be persisted and propagated immediately to connected users through real-time synchronization.
 
-## Technical Context
+Technical Context
 
-**Language/Version**: TypeScript (project constitution mandates TypeScript strict mode) — **NEEDS CLARIFICATION** on exact compiler target (e.g., 4.x vs 5.x)
+Language/Version: TypeScript 5.x (Strict Mode)
 
-**Primary Dependencies**: Frontend: React, react-dnd or similar; Backend: Node.js (Express/Nest) — **NEEDS CLARIFICATION** which backend framework to use
+Frontend Framework: React 18 + Vite + TypeScript
 
-**Storage**: Relational DB (PostgreSQL recommended) — **NEEDS CLARIFICATION** on DB choice and hosting
+Backend Framework: Express.js running on Node.js
 
-**Testing**: Jest + React Testing Library for frontend; Jest + supertest for backend — **NEEDS CLARIFICATION** on CI configuration and coverage target enforcement
+Database: SQLite using better-sqlite3
 
-**Target Platform**: Web browsers (desktop + mobile web)
+Testing:
 
-**Project Type**: Web application (frontend + backend) with realtime sync layer (WebSocket or server-sent events)
+Vitest for unit testing
+React Testing Library for component testing
+Supertest for API testing
+Playwright for end-to-end testing
 
-**Performance Goals**: Maintain 60 FPS for drag-and-drop interactions; low-latency updates (<200ms) for realtime events where possible
+Coverage Target:
 
-**Constraints**: Must comply with constitution (TypeScript strict, WCAG 2.1 AA, 80% coverage), and support immediate realtime updates for create/edit/delete actions
+Minimum 80% code coverage
+Coverage enforced in CI pipeline
 
-**Scale/Scope**: Typical board sizes (10s–100s of cards per board); concurrent user expectations NEEDS CLARIFICATION
+Target Platform:
 
-## Constitution Check
+Modern desktop browsers
+Mobile web browsers
 
-GATE: Must pass before Phase 0 research. Key gates derived from `.specify/memory/constitution.md`:
+Project Type:
 
-- TypeScript strict mode enforced
-- No `any` types without justification
-- Unit + integration tests; target 80% coverage
-- Accessibility: WCAG 2.1 AA for UI
-- Security: auth + input validation enforced on APIs
+Full-stack web application
+Frontend + Backend + Real-time synchronization layer
 
-Any deviation from these gates must be justified in the Complexity Tracking table below.
+Real-Time Communication:
 
-## Project Structure
+WebSocket-based updates for card creation, modification, and deletion
 
+Performance Goals:
+
+Card create/edit/delete updates visible to connected users within 200ms
+Board interactions remain responsive under normal usage
+
+Constraints:
+
+TypeScript strict mode enabled
+WCAG 2.1 AA accessibility compliance
+Minimum 80% test coverage
+Real-time updates required for card create/edit/delete actions
+
+Scale/Scope:
+
+Boards containing up to 100 cards
+Up to 20 concurrent connected users per board
+Constitution Check
+Required Gates
+TypeScript strict mode enabled
+No use of any without documented justification
+Unit and integration tests required
+Minimum 80% coverage
+WCAG 2.1 AA accessibility compliance
+API input validation required
+Authentication enforced through existing system
+Result
+
+All constitution gates satisfied.
+
+Project Structure
 frontend/
 ├── src/
 │   ├── components/
 │   ├── features/card/
-│   └── services/
+│   ├── services/
+│   └── types/
+
 backend/
 ├── src/
 │   ├── controllers/
 │   ├── services/
+│   ├── database/
 │   └── realtime/
+
 tests/
-  ├── unit/
-  └── integration/
+├── unit/
+├── integration/
+└── e2e/
+Structure Decision
 
-**Structure Decision**: Use a two-project layout (`frontend/` + `backend/`) to separate UI concerns from persistence and realtime concerns. This matches the realtime requirement and allows independent deployment scaling.
+Separate frontend and backend applications to isolate UI, API, persistence, and real-time synchronization concerns.
 
-## Phase 0: Outline & Research
+Out of Scope
+Drag-and-drop card reordering
+Column CRUD operations
+Board membership management
+Authentication implementation
+Notification preferences
 
-1. Resolve NEEDS CLARIFICATION items in Technical Context (auth method, DB choice, backend framework, CI enforcement, concurrency targets).
-2. Research realtime patterns (WebSocket vs WebRTC vs SSE) and pick one with rationale in `research.md`.
-3. Produce minimal API contract for cards (create, read, update, delete) and realtime message formats in `/contracts/`.
+Drag-and-drop functionality belongs to a separate feature specification.
 
-Output: `research.md` with resolved decisions and rationale.
+Phase 0: Research
+Validate WebSocket approach for real-time updates.
+Define card event formats:
+card.created
+card.updated
+card.deleted
+Finalize API contract structure.
+Output
 
-## Phase 1: Design & Contracts
+research.md
 
-Prerequisite: `research.md` complete
+Phase 1: Design & Contracts
+Data Model
 
-1. Generate `data-model.md` with `Card` fields and validation rules.
-2. Generate `/contracts/card-api.md` describing HTTP endpoints and realtime events.
-3. Create `quickstart.md` with local run instructions (dev server + migrations + env variables).
+Create data-model.md defining:
 
-## Phase 2: Tasks
+Card
+id
+title
+description
+columnId
+createdAt
+updatedAt
 
-After design: generate `tasks.md` (not created by this command) organizing work by user story.
+Validation:
 
-## Complexity Tracking
+Title required
+Title length: 1–100 characters
+Description optional
+Contracts
 
-No constitution gates are intentionally violated at this stage. If any technical decision requires a trade-off (e.g., temporary use of `any` for integration with legacy services), it must be documented here with justification.
+Create:
 
-***
+contracts/card-api.md
 
-Plan generated by `/speckit.plan` workflow on 2026-06-03
+Endpoints:
+
+POST /api/boards/:boardId/columns/:columnId/cards
+GET /api/cards/:id
+PUT /api/cards/:id
+DELETE /api/cards/:id
+
+WebSocket Events:
+
+card.created
+card.updated
+card.deleted
+Quickstart
+
+Create:
+
+quickstart.md
+
+Include:
+
+Installation
+Environment variables
+Database setup
+Local development startup
+Phase 2: Tasks
+
+Generate tasks grouped by:
+
+User Story 1
+
+Create Card
+
+User Story 2
+
+View and Edit Card
+
+User Story 3
+
+Delete Card
+
+Validation Tasks
+Verify FR-003 card detail viewing
+Verify SC-004 first-attempt success metric
+Complexity Tracking
+Decision	Justification
+WebSocket for realtime sync	Immediate update requirement in FR-009
+SQLite for storage	Simple local development and project scope
+Separate frontend/backend	Clear separation of concerns and maintainability
+Success Criteria Validation
+SC-001
+
+User can create a card in less than 10 seconds.
+
+SC-002
+
+Saved edits remain visible after refresh.
+
+SC-003
+
+Deleted cards disappear immediately.
+
+SC-004
+
+Conduct usability validation with at least 10 test scenarios covering create, edit, and delete workflows. Success is achieved when at least 90% of first-attempt user actions complete successfully without assistance or error recovery.
+
+Plan generated from /speckit.plan workflow and updated after consistency analysis.
