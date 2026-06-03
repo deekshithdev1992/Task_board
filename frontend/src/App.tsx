@@ -1,8 +1,14 @@
+import BoardView from './features/board/BoardView.js';
+
+const BOARD_ID = 'demo-board-001';
+const COLUMNS = [
+  { id: 'col-todo', name: 'To Do' },
+  { id: 'col-progress', name: 'In Progress' },
+  { id: 'col-done', name: 'Done' },
+];
+
 export default function App() {
   return (
-    <div>
-      <h1>Task Board Frontend</h1>
-      <p>Card CRUD feature scaffolding is initialized.</p>
-    </div>
+    <BoardView boardId={BOARD_ID} columns={COLUMNS} />
   );
 }
