@@ -3,12 +3,12 @@ import { describe, it, expect } from 'vitest';
 /**
  * Contract Test: Create Card API
  * 
- * Validates the shape and structure of the POST /api/boards/:boardId/cards endpoint.
+ * Validates the shape and structure of the POST /api/boards/:boardId/columns/:columnId/cards endpoint.
  * This test ensures the API contract remains stable across implementation changes.
  * 
  * According to contracts/card-api.md:
- * - Endpoint: POST /api/boards/:boardId/cards
- * - Request: { title: string, description?: string, columnId?: UUID }
+ * - Endpoint: POST /api/boards/:boardId/columns/:columnId/cards
+ * - Request: { title: string, description?: string }
  * - Response: 201 — { card: Card }
  * 
  * Card schema (from data-model.md):
@@ -24,7 +24,7 @@ import { describe, it, expect } from 'vitest';
  */
 
 describe('Card Create API Contract', () => {
-  describe('POST /api/boards/:boardId/cards', () => {
+  describe('POST /api/boards/:boardId/columns/:columnId/cards', () => {
     it('should return 201 Created with valid card object when title is provided', () => {
       /**
        * Test Scenario:
@@ -61,12 +61,10 @@ describe('Card Create API Contract', () => {
       const requestPayload = {
         title: 'Test Card',
         description: 'Optional description',
-        columnId: 'col-123',
       };
 
       expect(requestPayload.title).toBeDefined();
       expect(requestPayload.description).toBeDefined();
-      expect(requestPayload.columnId).toBeDefined();
     });
 
     it('should validate title is required and non-empty', () => {
@@ -132,8 +130,8 @@ describe('Card Create API Contract', () => {
       ];
 
       invalidPayloads.forEach((payload) => {
-        expect((payload as Record<string, unknown>).title).not.toBeDefined() ||
-        expect((payload as Record<string, unknown>).title).toBe('');
+        const title = (payload as Record<string, unknown>).title;
+        expect(title === undefined || title === '').toBe(true);
       });
     });
 
@@ -162,7 +160,7 @@ describe('Card Create API Contract', () => {
     it('should include board_id from URL parameter in response', () => {
       /**
        * API Route Requirement:
-       * POST /api/boards/:boardId/cards
+       * POST /api/boards/:boardId/columns/:columnId/cards
        * The board_id from the URL should be included in the card response
        */
       const boardId = 'board-abc123';
@@ -173,20 +171,18 @@ describe('Card Create API Contract', () => {
       expect(expectedCardResponse.board_id).toBe(boardId);
     });
 
-    it('should include column_id from request body or derive from first column', () => {
+    it('should include column_id from URL parameter in response', () => {
       /**
        * API Request Requirement:
-       * The request can include columnId in the body
-       * The response should contain the column_id
+       * The columnId route parameter should be included as column_id
+       * in the card response.
        */
       const columnId = 'col-xyz789';
-
-      const requestWithColumnId = {
-        title: 'New Card',
-        columnId,
+      const expectedCardResponse = {
+        column_id: columnId,
       };
 
-      expect(requestWithColumnId.columnId).toBe(columnId);
+      expect(expectedCardResponse.column_id).toBe(columnId);
     });
   });
 });

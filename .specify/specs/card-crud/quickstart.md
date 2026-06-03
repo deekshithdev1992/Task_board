@@ -33,3 +33,9 @@ Realtime:
 
 - The backend exposes a Socket.IO WebSocket endpoint at `ws://localhost:4000`.
 - In development, the frontend connects through the Vite dev server proxy (`/socket.io` route), so clients simply connect to the Vite URL (`http://localhost:5173`).
+- Card realtime event names are `card:created`, `card:updated`, and `card:deleted`.
+
+API authentication:
+
+- Card API routes require `Authorization: Bearer <userId>`.
+- The development frontend sends this header using `localStorage['task-board-user-id']` when set, or `demo-user` by default.

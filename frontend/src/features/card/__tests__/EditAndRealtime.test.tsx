@@ -414,6 +414,44 @@ describe('AddCard validation', () => {
     cleanup();
   });
 
+  it('creates a card with the required bearer Authorization header', async () => {
+    const onCardCreated = vi.fn();
+    const createdCard = {
+      id: 'c1',
+      title: 'Authenticated Create',
+      description: '',
+      position: 1,
+      column_id: 'c1',
+      board_id: 'b1',
+      created_at: '2026-06-03T00:00:00.000Z',
+      updated_at: '2026-06-03T00:00:00.000Z',
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ card: createdCard }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    render((<AddCard boardId="b1" columnId="c1" onCardCreated={onCardCreated} onCancel={vi.fn()} />) as any);
+
+    fireEvent.change(screen.getByLabelText('Card Title *'), { target: { value: 'Authenticated Create' } });
+    fireEvent.click(screen.getByText('Create Card'));
+
+    await waitFor(() => expect(onCardCreated).toHaveBeenCalledWith(createdCard));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/boards/b1/columns/c1/cards',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer demo-user',
+        }),
+      }),
+    );
+  });
+
   it('shows title required error when submitting with empty title', async () => {
     const onCardCreated = vi.fn();
 
@@ -478,6 +516,35 @@ describe('EditCard validation', () => {
     board_id: 'b1',
   };
 
+  it('updates a card with the required bearer Authorization header', async () => {
+    const onUpdated = vi.fn();
+    const updatedCard = { ...baseCard, title: 'Authenticated Update' };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ card: updatedCard }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    render((<EditCard card={baseCard} onUpdated={onUpdated} onCancel={vi.fn()} />) as any);
+
+    fireEvent.change(screen.getByLabelText('Title *'), { target: { value: 'Authenticated Update' } });
+    fireEvent.click(screen.getByText('Save Changes'));
+
+    await waitFor(() => expect(onUpdated).toHaveBeenCalledWith(updatedCard));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/cards/c1',
+      expect.objectContaining({
+        method: 'PUT',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer demo-user',
+        }),
+      }),
+    );
+  });
+
   it('shows title required error when clearing title and submitting', async () => {
     const onUpdated = vi.fn();
 
@@ -535,6 +602,56 @@ describe('CardDetailView rendering', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     cleanup();
+  });
+
+  it('fetches card detail with the required bearer Authorization header', async () => {
+    const card = {
+      id: 'c1',
+      title: 'Authenticated Detail',
+      description: 'A detailed description',
+      position: 1,
+      column_id: 'col1',
+      board_id: 'b1',
+      created_at: '2026-06-03T00:00:00.000Z',
+      updated_at: '2026-06-03T00:00:00.000Z',
+    };
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ card }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    render((<CardDetailView cardId="c1" onClose={vi.fn()} />) as any);
+
+    await waitFor(() => expect(screen.getByText('Authenticated Detail')).toBeDefined());
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/cards/c1',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer demo-user',
+        }),
+      }),
+    );
+  });
+
+  it('deletes a card with the required bearer Authorization header', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 204 }));
+
+    await cardService.deleteCard('c1');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/cards/c1',
+      expect.objectContaining({
+        method: 'DELETE',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer demo-user',
+        }),
+      }),
+    );
   });
 
   it('displays card description when present', async () => {

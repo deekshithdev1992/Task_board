@@ -8,7 +8,10 @@ export default defineConfig({
   test: {
     include: [
       'src/**/*.spec.ts',
-      path.resolve(__dirname, '../tests/**/*.spec.ts'),
+      path.resolve(__dirname, '../tests/contract/**/*.spec.ts'),
+      path.resolve(__dirname, '../tests/integration/**/*.spec.ts'),
+      path.resolve(__dirname, '../tests/security/**/*.spec.ts'),
+      path.resolve(__dirname, '../tests/unit/**/*.spec.ts'),
     ],
     coverage: {
       include: ['src/**'],

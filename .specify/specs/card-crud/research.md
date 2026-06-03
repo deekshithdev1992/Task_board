@@ -16,10 +16,10 @@ Generated: 2026-06-03
 
 ## Decision: Storage
 
-- Decision: SQLite (sql.js) for relational storage of cards and board metadata (in-memory).
+- Decision: SQLite via sql.js for relational storage of cards and board metadata (in-memory).
 - Rationale: Simple local development, no external database setup, auto-seeded on startup. Sufficient for project scope (boards with up to 100 cards, up to 20 concurrent users).
-- Alternatives: PostgreSQL (initially considered — rejected for development complexity); MongoDB (rejected for stronger consistency needs).
-- **Note**: spec.md and data-model.md reference PostgreSQL; the final implementation uses sql.js for simplicity.
+- Alternatives: PostgreSQL (initially considered — rejected for development complexity); `better-sqlite3` (rejected because the implementation uses browser-compatible sql.js); MongoDB (rejected for stronger consistency needs).
+- Final aligned state: spec, plan, data model, contracts, and quickstart describe sql.js-backed in-memory SQLite.
 
 ## Decision: Testing
 
@@ -28,9 +28,9 @@ Generated: 2026-06-03
 
 ## Decision: Realtime Synchronization Pattern
 
-- Decision: Use WebSocket-based realtime channel implemented with Socket.IO (or native `ws`) for server-driven push updates of create/edit/delete events.
+- Decision: Use WebSocket-based realtime channel implemented with Socket.IO for server-driven push updates of create/edit/delete events.
 - Rationale: WebSockets provide bidirectional low-latency updates across connected clients. Socket.IO offers reconnection, fallbacks and event namespaces which simplify collaboration features.
-- Alternatives considered: Server-Sent Events (SSE) — simpler but unidirectional and lacks client emission; WebRTC — overkill for this use-case. Chosen: WebSocket.
+- Alternatives considered: Server-Sent Events (SSE) — simpler but unidirectional and lacks client emission; native `ws` — lower-level API than needed; WebRTC — overkill for this use-case. Chosen: Socket.IO events `card:created`, `card:updated`, and `card:deleted`.
 
 ## CI / Coverage Enforcement
 

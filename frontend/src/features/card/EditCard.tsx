@@ -1,4 +1,5 @@
 import React, { useState, FormEvent, ChangeEvent } from 'react';
+import { getCardRequestHeaders } from '../../services/cardService.js';
 
 export interface EditCardProps {
   card: {
@@ -74,9 +75,7 @@ export const EditCard: React.FC<EditCardProps> = ({ card, onUpdated, onCancel })
 
       const response = await fetch(`/api/cards/${card.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getCardRequestHeaders(),
         body: JSON.stringify(payload),
       });
 

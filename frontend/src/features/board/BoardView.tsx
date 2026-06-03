@@ -145,11 +145,14 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
   }, []);
 
   const handleCardCreated = (columnId: string, card: Record<string, unknown>) => {
-    // Add the new card to the column
-    setCardsByColumn((prev) => ({
-      ...prev,
-      [columnId]: [...(prev[columnId] || []), card as unknown as Card],
-    }));
+    setCardsByColumn((prev) => {
+      const existing = prev[columnId] || [];
+      if (existing.some((c) => (c as Card).id === (card as Card).id)) return prev;
+      return {
+        ...prev,
+        [columnId]: [...existing, card as unknown as Card],
+      };
+    });
 
     // Close the add card form
     setShowAddCardForm((prev) => ({

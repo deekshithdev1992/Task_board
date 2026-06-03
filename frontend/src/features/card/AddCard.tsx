@@ -1,4 +1,5 @@
 import React, { useState, FormEvent, ChangeEvent } from 'react';
+import { getCardRequestHeaders } from '../../services/cardService.js';
 
 /**
  * AddCard Component
@@ -112,9 +113,7 @@ export const AddCard: React.FC<AddCardProps> = ({
         `/api/boards/${boardId}/columns/${columnId}/cards`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getCardRequestHeaders(),
           body: JSON.stringify(payload),
         }
       );

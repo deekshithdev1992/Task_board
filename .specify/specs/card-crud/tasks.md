@@ -36,19 +36,19 @@ description: "Generated task list for Card CRUD feature"
 
 **Goal**: Allow users to create a card in a column and see it immediately
 
-**Independent Test**: Create card via API and verify it appears in board UI and realtime event `card.created` is emitted
+**Independent Test**: Create card via API and verify it appears in board UI and realtime event `card:created` is emitted
 
 ### Tests
 
-- [X] T011 [P] [US1] Contract test: tests/contract/test_card_create_contract.spec.ts (validate POST /api/boards/:boardId/cards response shape)
+- [X] T011 [P] [US1] Contract test: tests/contract/test_card_create_contract.spec.ts (validate POST /api/boards/:boardId/columns/:columnId/cards response shape)
 - [X] T012 [P] [US1] Integration test: tests/integration/test_create_card.spec.ts (create card end-to-end, verify DB and realtime event)
 
 ### Implementation
 
-- [X] T013 [P] [US1] Implement `POST /api/boards/:boardId/cards` handler in backend/src/controllers/cards.controller.ts
+- [X] T013 [P] [US1] Implement `POST /api/boards/:boardId/columns/:columnId/cards` handler in backend/src/controllers/cards.controller.ts
 - [X] T014 [P] [US1] Implement backend service to create card in backend/src/services/cardService.ts
 - [X] T015 [P] [US1] Add Card model persistence in backend/src/models/card.ts (migration depends on T005)
-- [X] T016 [P] [US1] Emit realtime `card.created` event from backend/src/realtime/index.ts after successful create
+- [X] T016 [P] [US1] Emit realtime `card:created` event from backend/src/realtime/index.ts after successful create
 - [X] T017 [P] [US1] Add frontend `AddCard` component in frontend/src/features/card/AddCard.tsx and wire to `frontend/src/services/cardService.ts`
 - [X] T018 [US1] Add UI integration: display created card in frontend/src/features/board/BoardView.tsx (depends on T017)
 
@@ -60,7 +60,7 @@ Phase 4: User Story 2 - Edit a Card (Priority: P2)
 
 Goal: Allow users to view and update card details and propagate changes in realtime
 
-Independent Test: Retrieve card details, update card via API or UI, and verify changed values persist and card.updated event is emitted
+Independent Test: Retrieve card details, update card via API or UI, and verify changed values persist and card:updated event is emitted
 
 Tests
 
@@ -73,13 +73,13 @@ Tests
 
 - [X] T021 [US2] Implement PUT /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
 - [X] T022 [P] [US2] Implement backend update logic in backend/src/services/cardService.ts
-- [X] T023 [P] [US2] Emit realtime card.updated event after successful update in backend/src/realtime/index.ts
+- [X] T023 [P] [US2] Emit realtime card:updated event after successful update in backend/src/realtime/index.ts
 - [X] T024 [P] [US2] Add frontend EditCard component in frontend/src/features/card/EditCard.tsx and integrate into Card detail view
 - [X] T024A [P] [US2] Implement GET /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
 - [X] T024B [P] [US2] Implement backend card detail retrieval logic in backend/src/services/cardService.ts
 - [X] T024C [US2] Implement Card Detail View component in frontend/src/features/card/CardDetailView.tsx
 - [X] T024D [US2] Allow users to open and view card details from BoardView.tsx
-- [X] T024E [P] [US2] Handle realtime card.updated events in frontend/src/realtime/cardEvents.ts and update visible card details
+- [X] T024E [P] [US2] Handle realtime card:updated events in frontend/src/realtime/cardEvents.ts and update visible card details
 - [X] T024F [P] [US2] Add frontend tests validating realtime card update behavior
 
 Checkpoint: User Story 2 should be independently testable
@@ -90,29 +90,29 @@ Phase 5: User Story 3 - Delete a Card (Priority: P3)
 
 Goal: Allow users to delete cards and notify other viewers immediately
 
-Independent Test: Delete card and verify it is removed from DB, UI updates, and card.deleted event emitted and handled
+Independent Test: Delete card and verify it is removed from DB, UI updates, and card:deleted event emitted and handled
 
 Tests
 
-T025 [P] [US3] Contract test: tests/contract/test_card_delete_contract.spec.ts (validate DELETE /api/cards/)
+- [X] T025 [P] [US3] Contract test: tests/contract/test_card_delete_contract.spec.ts (validate DELETE /api/cards/:cardId)
 
-T026 [P] [US3] Integration test: tests/integration/test_delete_card.spec.ts (delete card end-to-end, verify DB and realtime event)
+- [X] T026 [P] [US3] Integration test: tests/integration/test_delete_card.spec.ts (delete card end-to-end, verify DB and realtime event)
 
 Implementation
 
-T027 [US3] Implement DELETE /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
+- [X] T027 [US3] Implement DELETE /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
 
-T028 [P] [US3] Implement backend delete logic in backend/src/services/cardService.ts
+- [X] T028 [P] [US3] Implement backend delete logic in backend/src/services/cardService.ts
 
-T029 [P] [US3] Emit realtime card.deleted event with { cardId, boardId, columnId } in backend/src/realtime/index.ts
+- [X] T029 [P] [US3] Emit realtime card:deleted event with { cardId, boardId, columnId } in backend/src/realtime/index.ts
 
-T030 [P] [US3] Add frontend delete UI and confirmation component in frontend/src/features/card/DeleteCard.tsx and ensure Card detail view closes when deleted
+- [X] T030 [P] [US3] Add frontend delete UI and confirmation component in frontend/src/features/card/DeleteCard.tsx and ensure Card detail view closes when deleted
 
-T030A [P] [US3] Handle realtime card.deleted events in board and card detail views
+- [X] T030A [P] [US3] Handle realtime card:deleted events in board and card detail views
 
-T030B [P] [US3] Add frontend tests validating card detail view closes when card is deleted by another user
+- [X] T030B [P] [US3] Add frontend tests validating card detail view closes when card is deleted by another user
 
-T030C [P] [US3] Add realtime synchronization tests for delete-event propagation
+- [X] T030C [P] [US3] Add realtime synchronization tests for delete-event propagation
 
 Checkpoint: User Story 3 should be independently testable
 ---
@@ -129,15 +129,16 @@ Checkpoint: User Story 3 should be independently testable
 
 ## Validation Tasks
 
-T036 Validate card detail viewing functionality (FR-003)
+- [X] T036 Validate card detail viewing functionality (FR-003)
 
-T037 Verify users can open and view card details from the board
+- [X] T037 Verify users can open and view card details from the board
 
-T038 Validate SC-004 by testing create, edit, and delete workflows and confirming at least 90% of users complete these actions successfully on their first attempt
+- [X] T038 Validate SC-004 by testing create, edit, and delete workflows and confirming at least 90% of users complete these actions successfully on their first attempt
 
 - [X] T039 Execute 10 validation scenarios covering create, edit, and delete workflows and confirm at least 90% first-attempt success rate (SC-004)
 
-T040 Validate title field rules (required, minimum 1 character, maximum 100 characters) across frontend and backend validation
+- [X] T040 Validate title field rules (required, minimum 1 character, maximum 100 characters) across frontend and backend validation
+- [X] T041 Add Playwright end-to-end tests for create, view detail, edit, and delete Card workflows in tests/e2e/card-crud.spec.ts
 ---
 
 ## Dependencies & Execution Order

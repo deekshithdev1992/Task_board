@@ -53,7 +53,7 @@ describe('Card Validation API Contract', () => {
     });
   });
 
-  describe('POST /api/boards/:boardId/cards validation', () => {
+  describe('POST /api/boards/:boardId/columns/:columnId/cards validation', () => {
     it('should reject request with missing title', () => {
       const payload = { description: 'No title' };
       expect(payload.title).toBeUndefined();
@@ -82,14 +82,9 @@ describe('Card Validation API Contract', () => {
       });
     });
 
-    it('should reject request with negative position', () => {
-      const payload = { title: 'Valid', position: -1 };
-      expect(payload.position).toBeLessThan(0);
-    });
-
-    it('should accept request with valid position', () => {
-      const payload = { title: 'Valid', position: 0 };
-      expect(payload.position).toBeGreaterThanOrEqual(0);
+    it('should not require columnId in the body because columnId is a route parameter', () => {
+      const payload = { title: 'Valid' };
+      expect(payload).not.toHaveProperty('columnId');
     });
   });
 
