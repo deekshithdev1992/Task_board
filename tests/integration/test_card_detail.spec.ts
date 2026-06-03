@@ -1,186 +1,119 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
+import type express from 'express';
+import type { Database } from 'sql.js';
+import {
+  AUTH_HEADER,
+  BOARD_ID,
+  COLUMN_ID,
+  TEST_USER,
+  createTestApp,
+  getCardCount,
+  insertCard,
+} from './cardIntegrationTestUtils.js';
 
-/**
- * Integration Test: Card Detail End-to-End
- *
- * Tests the complete flow of retrieving a card by ID:
- * 1. API receives GET request with a valid card ID
- * 2. Card is retrieved from the database
- * 3. Card data is returned in the response
- * 4. Proper error response for non-existent cards
- *
- * Based on:
- * - contracts/card-api.md: GET /api/cards/:cardId
- * - data-model.md: Card entity and validation rules
- */
+const realtime = vi.hoisted(() => ({
+  emitCardCreated: vi.fn(),
+  emitCardUpdated: vi.fn(),
+  emitCardDeleted: vi.fn(),
+}));
+
+vi.mock('../../backend/src/realtime/index.js', () => ({
+  getRealtime: () => realtime,
+}));
+
+const CARD_ID = '00000000-0000-4000-a000-000000000401';
+const CARD_WITHOUT_DESCRIPTION_ID = '00000000-0000-4000-a000-000000000402';
 
 describe('Card Detail Integration Tests', () => {
-  let app: unknown;
-  let boardId: string;
-  let columnId: string;
-  let cardId: string;
+  let app: express.Application;
+  let db: Database;
 
-  beforeAll(async () => {
-    /**
-     * Setup:
-     * 1. Initialize the Express app
-     * 2. Create a test board
-     * 3. Create a test column
-     * 4. Create a test card to retrieve
-     */
-    // TODO: Initialize Express app instance
-    // app = initializeApp();
-
-    // TODO: Create test board via API or database
-    // const boardResponse = await request(app).post('/api/boards').send({ name: 'Test Board' });
-    // boardId = boardResponse.body.board.id;
-
-    // TODO: Create test column via API or database
-    // const columnResponse = await request(app).post(`/api/boards/${boardId}/columns`).send({ name: 'Test Column' });
-    // columnId = columnResponse.body.column.id;
-
-    // TODO: Create test card via API or database
-    // const cardResponse = await request(app).post(`/api/boards/${boardId}/columns/${columnId}/cards`).send({ title: 'Test Card for Detail' });
-    // cardId = cardResponse.body.card.id;
-  });
-
-  afterAll(async () => {
-    /**
-     * Cleanup:
-     * 1. Delete test cards
-     * 2. Delete test column
-     * 3. Delete test board
-     */
-    // TODO: Cleanup database state
+  beforeEach(async () => {
+    realtime.emitCardCreated.mockClear();
+    realtime.emitCardUpdated.mockClear();
+    realtime.emitCardDeleted.mockClear();
+    ({ app, db } = await createTestApp());
+    insertCard(db, {
+      id: CARD_ID,
+      title: 'Detail Card',
+      description: 'A detailed description',
+      position: 3,
+      createdBy: TEST_USER,
+    });
+    insertCard(db, {
+      id: CARD_WITHOUT_DESCRIPTION_ID,
+      title: 'No Description Card',
+      description: null,
+      position: 4,
+      createdBy: TEST_USER,
+    });
   });
 
   describe('GET /api/cards/:cardId', () => {
-    it('should return card with all required fields for valid cardId', async () => {
-      /**
-       * Given: A valid card ID
-       * When: GET /api/cards/:cardId is called
-       * Then: Response status is 200
-       * And: Response body contains the card with all required fields
-       */
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .get(`/api/cards/${cardId}`)
-      //   .expect(200);
+    it('rejects card detail requests without authentication', async () => {
+      const res = await request(app).get(`/api/cards/${CARD_ID}`);
 
-      // expect(response.body.card).toBeDefined();
-      // expect(response.body.card.id).toBe(cardId);
-      // expect(response.body.card.title).toBeDefined();
-      // expect(response.body.card.position).toBeDefined();
-      // expect(response.body.card.column_id).toBeDefined();
-      // expect(response.body.card.board_id).toBeDefined();
-      // expect(response.body.card.created_at).toBeDefined();
-      // expect(response.body.card.updated_at).toBeDefined();
-
-      expect(cardId).toBeDefined();
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Authentication required' });
+      expect(getCardCount(db)).toBe(2);
     });
 
-    it('should return full card data matching creation request', async () => {
-      /**
-       * Given: A card has been created with specific data
-       * When: The card is retrieved via GET /api/cards/:cardId
-       * Then: All fields match the creation data
-       */
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .get(`/api/cards/${cardId}`)
-      //   .expect(200);
+    it('returns a card with all required fields and does not mutate the database', async () => {
+      const res = await request(app)
+        .get(`/api/cards/${CARD_ID}`)
+        .set('Authorization', AUTH_HEADER);
 
-      // expect(response.body.card.title).toBe('Test Card for Detail');
-      // expect(response.body.card.board_id).toBe(boardId);
-      // expect(response.body.card.column_id).toBe(columnId);
-
-      expect(true).toBe(true);
+      expect(res.status).toBe(200);
+      expect(res.body.card).toMatchObject({
+        id: CARD_ID,
+        title: 'Detail Card',
+        description: 'A detailed description',
+        position: 3,
+        column_id: COLUMN_ID,
+        board_id: BOARD_ID,
+        created_by: TEST_USER,
+      });
+      expect(res.body.card.created_at).toEqual(expect.any(String));
+      expect(res.body.card.updated_at).toEqual(expect.any(String));
+      expect(getCardCount(db)).toBe(2);
+      expect(realtime.emitCardCreated).not.toHaveBeenCalled();
+      expect(realtime.emitCardUpdated).not.toHaveBeenCalled();
+      expect(realtime.emitCardDeleted).not.toHaveBeenCalled();
     });
 
-    it('should include optional description field when present', async () => {
-      /**
-       * Given: A card with a description
-       * When: The card is retrieved
-       * Then: The description field is present in the response
-       */
-      // TODO: Implement actual test
-      // Create card with description
-      // const createResponse = await request(app)
-      //   .post(`/api/boards/${boardId}/columns/${columnId}/cards`)
-      //   .send({ title: 'Card With Description', description: 'A detailed description' })
-      //   .expect(201);
+    it('omits optional description when it is not present in the database', async () => {
+      const res = await request(app)
+        .get(`/api/cards/${CARD_WITHOUT_DESCRIPTION_ID}`)
+        .set('Authorization', AUTH_HEADER);
 
-      // const cardWithDescId = createResponse.body.card.id;
-
-      // const response = await request(app)
-      //   .get(`/api/cards/${cardWithDescId}`)
-      //   .expect(200);
-
-      // expect(response.body.card.description).toBe('A detailed description');
-
-      expect(true).toBe(true);
+      expect(res.status).toBe(200);
+      expect(res.body.card).toMatchObject({
+        id: CARD_WITHOUT_DESCRIPTION_ID,
+        title: 'No Description Card',
+        position: 4,
+      });
+      expect(res.body.card.description).toBeUndefined();
     });
 
-    it('should return 404 for non-existent cardId', async () => {
-      /**
-       * Given: A non-existent card ID
-       * When: GET /api/cards/:nonexistent is called
-       * Then: Response status is 404
-       * And: Error message indicates card not found
-       */
-      const fakeCardId = 'card-does-not-exist';
+    it('returns 404 for a non-existent card', async () => {
+      const res = await request(app)
+        .get('/api/cards/00000000-0000-4000-a000-000000000999')
+        .set('Authorization', AUTH_HEADER);
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .get(`/api/cards/${fakeCardId}`)
-      //   .expect(404);
-
-      // expect(response.body.error).toBeDefined();
-      // expect(response.body.error).toContain('not found');
-
-      expect(fakeCardId).toBeDefined();
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Card not found' });
+      expect(getCardCount(db)).toBe(2);
     });
 
-    it('should include created_by when card has an author', async () => {
-      /**
-       * Given: A card created by an authenticated user
-       * When: The card is retrieved
-       * Then: created_by field matches the user's ID
-       */
-      // TODO: Implement actual test
-      // const createResponse = await request(app)
-      //   .post(`/api/boards/${boardId}/columns/${columnId}/cards`)
-      //   .set('Authorization', 'Bearer user-123')
-      //   .send({ title: 'Authored Card' })
-      //   .expect(201);
+    it('rejects an invalid cardId route parameter', async () => {
+      const res = await request(app)
+        .get('/api/cards/not-a-uuid')
+        .set('Authorization', AUTH_HEADER);
 
-      // const response = await request(app)
-      //   .get(`/api/cards/${createResponse.body.card.id}`)
-      //   .expect(200);
-
-      // expect(response.body.card.created_by).toBe('user-123');
-
-      expect(true).toBe(true);
-    });
-
-    it('should return timestamps in ISO 8601 format', async () => {
-      /**
-       * Given: A card exists
-       * When: The card is retrieved
-       * Then: created_at and updated_at are ISO 8601 formatted strings
-       */
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .get(`/api/cards/${cardId}`)
-      //   .expect(200);
-
-      // const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
-      // expect(response.body.card.created_at).toMatch(isoRegex);
-      // expect(response.body.card.updated_at).toMatch(isoRegex);
-
-      const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
-      expect('2026-06-03T00:00:00.000Z').toMatch(isoRegex);
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toContainEqual({ field: 'cardId', message: 'cardId must be a valid UUID' });
+      expect(getCardCount(db)).toBe(2);
     });
   });
 });

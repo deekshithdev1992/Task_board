@@ -22,6 +22,13 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
+## Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `4000` | Backend Express server port |
+| `FRONTEND_URL` | `http://localhost:5173` | Frontend URL for Socket.IO CORS origin |
+
 ## User Stories
 
 | US | Feature | Branch | Tag |

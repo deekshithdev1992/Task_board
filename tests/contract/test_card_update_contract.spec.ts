@@ -42,8 +42,8 @@ describe('Card Update API Contract', () => {
     });
 
     it('should return 400 when invalid fields are provided (e.g., title too long)', () => {
-      const invalidPayload = { title: 'x'.repeat(256) };
-      expect(invalidPayload.title.length).toBeGreaterThan(255);
+      const invalidPayload = { title: 'x'.repeat(101) };
+      expect(invalidPayload.title.length).toBeGreaterThan(100);
     });
 
     it('should return 404 when cardId does not exist', () => {

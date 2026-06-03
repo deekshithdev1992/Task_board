@@ -14,6 +14,8 @@
 
 * Q: Require real-time updates for connected viewers?
   A: Option A – Require real-time updates for card create/edit/delete so all connected viewers see changes immediately and deletion notifications are delivered instantly.
+* Q: What authentication format do Card API endpoints require?
+  A: All Card API endpoints are protected by the existing auth middleware and require `Authorization: Bearer <userId>`; the bearer value is parsed as the user id by the current implementation.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -82,7 +84,7 @@ As a user, I want to remove cards that are no longer needed so that the board re
 
 * What happens when two users edit the same card at nearly the same time?
 
-  * The system must maintain data consistency and notify affected users if their changes cannot be applied due to a conflict.
+  * The system applies the most recent successful saved update and broadcasts the resulting card state to connected users.
 
 * What happens when a user attempts to edit or delete a card that has already been deleted by another user?
 
@@ -120,7 +122,8 @@ As a user, I want to remove cards that are no longer needed so that the board re
 ## Assumptions
 
 * Users already have access to a task board.
-* Authentication and authorization are handled by existing systems.
+* Authentication is handled by existing middleware using `Authorization: Bearer <userId>` for Card API requests.
+* Ownership authorization is not implemented in Card CRUD and remains an accepted security exception documented in `docs/security/t033-security-review.md`.
 * Each card belongs to exactly one column.
 * Network connectivity is available during normal operation.
 * Real-time updates for card create, edit, and delete operations are part of this feature so connected users see changes immediately.

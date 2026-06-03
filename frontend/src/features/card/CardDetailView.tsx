@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { getCard, Card } from '../../services/cardService.js';
 import EditCard from './EditCard.js';
 import DeleteCard from './DeleteCard.js';
+import * as cardEvents from '../../realtime/cardEvents.js';
 
 export interface CardDetailViewProps {
   cardId: string;
@@ -16,11 +17,47 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
   onCardUpdated,
   onCardDeleted,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   const [card, setCard] = useState<Record<string, unknown> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleDialogKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const focusable = dialogRef.current?.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (!focusable || focusable.length === 0) return;
+    const first = focusable[0] as HTMLElement;
+    const last = focusable[focusable.length - 1] as HTMLElement;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isLoading && dialogRef.current) {
+      const firstFocusable = dialogRef.current.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (firstFocusable) (firstFocusable as HTMLElement).focus();
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     let mounted = true;
@@ -38,29 +75,23 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
     };
     load();
     // subscribe to realtime updates for this card
-    let unsubUpdated: (() => void) | null = null;
-    let unsubDeleted: (() => void) | null = null;
-    let cardEvents: typeof import('../../realtime/cardEvents') | null = null;
-    (async () => {
-      cardEvents = await import('../../realtime/cardEvents');
-      unsubUpdated = cardEvents.onCardUpdated((payload) => {
-        const updated = payload.card as unknown as Card;
-        if (updated.id === cardId) {
-          setCard(updated as unknown as Record<string, unknown>);
-        }
-      });
-      unsubDeleted = cardEvents.onCardDeleted((payload) => {
-        if (payload.cardId === cardId) {
-          if (onCardDeleted) onCardDeleted(payload);
-          onClose();
-        }
-      });
-    })();
+    const unsubUpdated = cardEvents.onCardUpdated((payload) => {
+      const updated = payload.card as unknown as Card;
+      if (updated.id === cardId) {
+        setCard(updated as unknown as Record<string, unknown>);
+      }
+    });
+    const unsubDeleted = cardEvents.onCardDeleted((payload) => {
+      if (payload.cardId === cardId) {
+        if (onCardDeleted) onCardDeleted(payload);
+        onClose();
+      }
+    });
 
     return () => {
       mounted = false;
-      if (unsubUpdated) unsubUpdated();
-      if (unsubDeleted) unsubDeleted();
+      unsubUpdated();
+      unsubDeleted();
     };
   }, [cardId]);
 
@@ -83,9 +114,9 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
 
   if (isLoading) {
     return (
-      <div className="card-detail-modal">
+      <div className="card-detail-modal" role="dialog" aria-modal="true" aria-labelledby="card-detail-loading" ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
         <div className="card-detail">
-          <div>Loading...</div>
+          <div id="card-detail-loading">Loading...</div>
         </div>
       </div>
     );
@@ -93,9 +124,9 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
 
   if (error || !card) {
     return (
-      <div className="card-detail-modal">
+      <div className="card-detail-modal" role="dialog" aria-modal="true" aria-labelledby="card-detail-error" ref={dialogRef} tabIndex={-1} onKeyDown={handleDialogKeyDown}>
         <div className="card-detail">
-          <div className="error-message">{error || 'Card not found'}</div>
+          <div id="card-detail-error" className="error-message">{error || 'Card not found'}</div>
           <div className="form-actions">
             <button className="btn btn-secondary" onClick={onClose}>
               Close
@@ -109,10 +140,10 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
   const descriptionStr = card ? String((card as unknown as Card).description || '') : '';
 
   return (
-    <div className="card-detail-modal" role="dialog" aria-modal="true">
+    <div className="card-detail-modal" role="dialog" aria-modal="true" ref={dialogRef} tabIndex={-1} aria-labelledby="card-detail-title" onKeyDown={handleDialogKeyDown}>
       <div className="card-detail">
         <div className="card-detail-header">
-          <h2>{(card as unknown as Card).title}</h2>
+          <h2 id="card-detail-title">{(card as unknown as Card).title}</h2>
           <button className="btn btn-ghost" onClick={onClose} aria-label="Close">
             ✕
           </button>

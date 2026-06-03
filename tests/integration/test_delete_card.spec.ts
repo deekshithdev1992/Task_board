@@ -1,159 +1,106 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
+import type express from 'express';
+import type { Database } from 'sql.js';
+import {
+  AUTH_HEADER,
+  BOARD_ID,
+  COLUMN_ID,
+  createTestApp,
+  getCardCount,
+  getDbCard,
+  insertCard,
+} from './cardIntegrationTestUtils.js';
 
-/**
- * Integration Test: Delete Card End-to-End
- *
- * Tests the complete flow of deleting a card:
- * 1. API receives DELETE request with valid cardId
- * 2. Card is deleted from the database
- * 3. Response confirms deletion with 204 No Content
- * 4. Realtime event 'card.deleted' is emitted to connected clients
- *
- * Based on:
- * - contracts/card-api.md: DELETE /api/cards/:cardId
- * - data-model.md: Card entity and validation rules
- * - Realtime contract: card.deleted event with { cardId, boardId, columnId } payload
- */
+const realtime = vi.hoisted(() => ({
+  emitCardCreated: vi.fn(),
+  emitCardUpdated: vi.fn(),
+  emitCardDeleted: vi.fn(),
+}));
+
+vi.mock('../../backend/src/realtime/index.js', () => ({
+  getRealtime: () => realtime,
+}));
+
+const CARD_ID = '00000000-0000-4000-a000-000000000301';
 
 describe('Delete Card Integration Tests', () => {
-  let app: unknown;
-  let boardId: string;
-  let columnId: string;
-  let cardId: string;
-  let realtimeEvents: unknown[] = [];
+  let app: express.Application;
+  let db: Database;
 
-  beforeAll(async () => {
-    /**
-     * Setup:
-     * 1. Initialize the Express app
-     * 2. Create a test board
-     * 3. Create a test column
-     * 4. Create a test card to delete
-     * 5. Setup realtime event listener
-     */
-    // TODO: Initialize Express app instance
-    // app = initializeApp();
-
-    // TODO: Create test board via API or database
-    // const boardResponse = await request(app).post('/api/boards').send({ name: 'Test Board' });
-    // boardId = boardResponse.body.board.id;
-
-    // TODO: Create test column via API or database
-    // const columnResponse = await request(app).post(`/api/boards/${boardId}/columns`).send({ name: 'Test Column' });
-    // columnId = columnResponse.body.column.id;
-
-    // TODO: Create test card via API or database
-    // const cardResponse = await request(app).post(`/api/boards/${boardId}/columns/${columnId}/cards`).send({ title: 'Card to Delete' });
-    // cardId = cardResponse.body.card.id;
-
-    // TODO: Setup realtime event listener
-    // realtimeManager.on('card.deleted', (event) => realtimeEvents.push(event));
-  });
-
-  afterAll(async () => {
-    /**
-     * Cleanup:
-     * 1. Delete test cards
-     * 2. Delete test column
-     * 3. Delete test board
-     */
-    // TODO: Cleanup database state
+  beforeEach(async () => {
+    realtime.emitCardCreated.mockClear();
+    realtime.emitCardUpdated.mockClear();
+    realtime.emitCardDeleted.mockClear();
+    ({ app, db } = await createTestApp());
+    insertCard(db, {
+      id: CARD_ID,
+      title: 'Delete Me',
+      description: 'Card to delete',
+      position: 0,
+    });
   });
 
   describe('DELETE /api/cards/:cardId', () => {
-    it('should return 204 No Content when card is deleted', async () => {
-      /**
-       * Given: An existing card
-       * When: DELETE /api/cards/:cardId is called
-       * Then: Response status is 204
-       * And: Response body is empty
-       */
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .delete(`/api/cards/${cardId}`)
-      //   .expect(204);
+    it('rejects card deletion without authentication', async () => {
+      const res = await request(app).delete(`/api/cards/${CARD_ID}`);
 
-      // expect(response.noContent).toBe(true);
-      // expect(response.body).toEqual({});
-
-      expect(true).toBe(true);
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Authentication required' });
+      expect(getDbCard(db, CARD_ID)).not.toBeNull();
+      expect(realtime.emitCardDeleted).not.toHaveBeenCalled();
     });
 
-    it('should remove card from database after deletion', async () => {
-      /**
-       * Given: A card exists in the database
-       * When: The card is deleted
-       * Then: GET /api/cards/:cardId returns 404
-       */
-      // TODO: Implement actual test
-      // await request(app).delete(`/api/cards/${cardId}`).expect(204);
+    it('deletes a card, removes it from the database, and emits realtime card.deleted', async () => {
+      const res = await request(app)
+        .delete(`/api/cards/${CARD_ID}`)
+        .set('Authorization', AUTH_HEADER);
 
-      // const getResponse = await request(app)
-      //   .get(`/api/cards/${cardId}`)
-      //   .expect(404);
-
-      // expect(getResponse.body.error).toBeDefined();
-
-      expect(true).toBe(true);
+      expect(res.status).toBe(204);
+      expect(res.text).toBe('');
+      expect(getDbCard(db, CARD_ID)).toBeNull();
+      expect(getCardCount(db)).toBe(0);
+      expect(realtime.emitCardDeleted).toHaveBeenCalledWith(BOARD_ID, COLUMN_ID, {
+        cardId: CARD_ID,
+        boardId: BOARD_ID,
+        columnId: COLUMN_ID,
+      });
     });
 
-    it('should emit realtime card.deleted event after successful deletion', async () => {
-      /**
-       * Given: A realtime event listener is attached
-       * When: A card is deleted
-       * Then: A 'card.deleted' event is emitted with cardId, boardId, columnId
-       */
-      realtimeEvents = [];
+    it('deleted card is no longer retrievable through the API', async () => {
+      await request(app)
+        .delete(`/api/cards/${CARD_ID}`)
+        .set('Authorization', AUTH_HEADER)
+        .expect(204);
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .delete(`/api/cards/${cardId}`)
-      //   .expect(204);
+      const res = await request(app)
+        .get(`/api/cards/${CARD_ID}`)
+        .set('Authorization', AUTH_HEADER);
 
-      // // Wait for realtime event
-      // await new Promise(resolve => setTimeout(resolve, 100));
-
-      // expect(realtimeEvents).toHaveLength(1);
-      // expect(realtimeEvents[0].cardId).toBe(cardId);
-
-      expect(true).toBe(true);
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Card not found' });
     });
 
-    it('should return 404 when cardId does not exist', async () => {
-      /**
-       * Given: A non-existent card ID
-       * When: DELETE /api/cards/:nonexistent is called
-       * Then: Response status is 404
-       */
-      const fakeCardId = 'card-does-not-exist';
+    it('returns 404 for a non-existent card and does not emit realtime', async () => {
+      const res = await request(app)
+        .delete('/api/cards/00000000-0000-4000-a000-000000000999')
+        .set('Authorization', AUTH_HEADER);
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .delete(`/api/cards/${fakeCardId}`)
-      //   .expect(404);
-
-      // expect(response.body.error).toBeDefined();
-
-      expect(fakeCardId).toBeDefined();
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ error: 'Card not found' });
+      expect(getDbCard(db, CARD_ID)).not.toBeNull();
+      expect(realtime.emitCardDeleted).not.toHaveBeenCalled();
     });
 
-    it('should reject request with malformed cardId', async () => {
-      /**
-       * Given: A malformed card ID
-       * When: DELETE /api/cards/:malformed is called
-       * Then: Response status is 400
-       */
-      const malformedCardId = 'not-a-valid-id';
+    it('rejects an invalid cardId route parameter', async () => {
+      const res = await request(app)
+        .delete('/api/cards/not-a-uuid')
+        .set('Authorization', AUTH_HEADER);
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .delete(`/api/cards/${malformedCardId}`)
-      //   .expect(400);
-
-      // expect(response.body.error).toBeDefined();
-
-      expect(malformedCardId).toBeDefined();
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toContainEqual({ field: 'cardId', message: 'cardId must be a valid UUID' });
+      expect(getDbCard(db, CARD_ID)).not.toBeNull();
+      expect(realtime.emitCardDeleted).not.toHaveBeenCalled();
     });
   });
 });

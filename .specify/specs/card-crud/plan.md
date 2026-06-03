@@ -16,7 +16,7 @@ Frontend Framework: React 18 + Vite + TypeScript
 
 Backend Framework: Express.js running on Node.js
 
-Database: SQLite using better-sqlite3
+Database: SQLite using sql.js in-memory database
 
 Testing:
 
@@ -108,9 +108,9 @@ Drag-and-drop functionality belongs to a separate feature specification.
 Phase 0: Research
 Validate WebSocket approach for real-time updates.
 Define card event formats:
-card.created
-card.updated
-card.deleted
+card:created
+card:updated
+card:deleted
 Finalize API contract structure.
 Output
 
@@ -143,15 +143,20 @@ contracts/card-api.md
 Endpoints:
 
 POST /api/boards/:boardId/columns/:columnId/cards
-GET /api/cards/:id
-PUT /api/cards/:id
-DELETE /api/cards/:id
+GET /api/boards/:boardId/columns/:columnId/cards
+GET /api/cards/:cardId
+PUT /api/cards/:cardId
+DELETE /api/cards/:cardId
+
+Authentication:
+
+All Card API endpoints require Authorization: Bearer <userId>.
 
 WebSocket Events:
 
-card.created
-card.updated
-card.deleted
+card:created
+card:updated
+card:deleted
 Quickstart
 
 Create:
@@ -185,8 +190,8 @@ Verify FR-003 card detail viewing
 Verify SC-004 first-attempt success metric
 Complexity Tracking
 Decision	Justification
-WebSocket for realtime sync	Immediate update requirement in FR-009
-SQLite for storage	Simple local development and project scope
+Socket.IO events for realtime sync	Immediate update requirement in FR-009; implementation emits `card:created`, `card:updated`, and `card:deleted`
+SQLite via sql.js for storage	Simple local development and project scope; implementation uses an in-memory sql.js database seeded at startup
 Separate frontend/backend	Clear separation of concerns and maintainability
 Success Criteria Validation
 SC-001

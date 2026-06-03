@@ -35,6 +35,24 @@ export interface UpdateCardInput {
   position?: number;
 }
 
+const AUTH_USER_STORAGE_KEY = 'task-board-user-id';
+const DEFAULT_AUTH_USER_ID = 'demo-user';
+
+function getAuthUserId(): string {
+  try {
+    return globalThis.localStorage?.getItem(AUTH_USER_STORAGE_KEY) || DEFAULT_AUTH_USER_ID;
+  } catch {
+    return DEFAULT_AUTH_USER_ID;
+  }
+}
+
+export function getCardRequestHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${getAuthUserId()}`,
+  };
+}
+
 /**
  * Create a new card in a board's column
  *
@@ -51,9 +69,7 @@ export async function createCard(
 ): Promise<Card> {
   const response = await fetch(`/api/boards/${boardId}/columns/${columnId}/cards`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getCardRequestHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -74,7 +90,9 @@ export async function createCard(
  * @throws Error if card not found or request fails
  */
 export async function getCard(cardId: string): Promise<Card> {
-  const response = await fetch(`/api/cards/${cardId}`);
+  const response = await fetch(`/api/cards/${cardId}`, {
+    headers: getCardRequestHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch card');
@@ -97,7 +115,10 @@ export async function getCardsByColumn(
   columnId: string
 ): Promise<Card[]> {
   const response = await fetch(
-    `/api/boards/${boardId}/columns/${columnId}/cards`
+    `/api/boards/${boardId}/columns/${columnId}/cards`,
+    {
+      headers: getCardRequestHeaders(),
+    }
   );
 
   if (!response.ok) {
@@ -116,7 +137,9 @@ export async function getCardsByColumn(
  * @throws Error if request fails
  */
 export async function getCardsByBoard(boardId: string): Promise<Card[]> {
-  const response = await fetch(`/api/boards/${boardId}/cards`);
+  const response = await fetch(`/api/boards/${boardId}/cards`, {
+    headers: getCardRequestHeaders(),
+  });
 
   if (!response.ok) {
     throw new Error('Failed to fetch cards');
@@ -140,9 +163,7 @@ export async function updateCard(
 ): Promise<Card> {
   const response = await fetch(`/api/cards/${cardId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getCardRequestHeaders(),
     body: JSON.stringify(data),
   });
 
@@ -163,6 +184,7 @@ export async function updateCard(
 export async function deleteCard(cardId: string): Promise<void> {
   const response = await fetch(`/api/cards/${cardId}`, {
     method: 'DELETE',
+    headers: getCardRequestHeaders(),
   });
 
   if (!response.ok) {

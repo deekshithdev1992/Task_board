@@ -4,7 +4,7 @@
 
 - **Card**
   - `id` (UUID) — primary key
-  - `title` (string, required, max 255)
+  - `title` (string, required, max 100)
   - `description` (string, optional)
   - `position` (number) — ordering within a column
   - `column_id` (UUID) — foreign key to `Column`
@@ -20,8 +20,8 @@
 
 ## Validation Rules
 
-- `title`: required, non-empty, max length 255
-- `description`: optional, max length 10_000 (or NEEDS CLARIFICATION)
+- `title`: required, non-empty, max length 100
+- `description`: optional, max length 10_000
 - `position`: non-negative number; on insert compute highest position + 1
 
 ## State Transitions

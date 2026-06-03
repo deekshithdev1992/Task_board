@@ -1,5 +1,5 @@
 const TITLE_MIN_LENGTH = 1;
-const TITLE_MAX_LENGTH = 255;
+const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 10000;
 
 export interface ValidationError {

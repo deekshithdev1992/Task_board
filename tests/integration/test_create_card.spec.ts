@@ -1,303 +1,173 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
+import type express from 'express';
+import type { Database } from 'sql.js';
+import {
+  AUTH_HEADER,
+  BOARD_ID,
+  COLUMN_ID,
+  TEST_USER,
+  createTestApp,
+  getCardCount,
+  getDbCard,
+  insertCard,
+} from './cardIntegrationTestUtils.js';
 
-/**
- * Integration Test: Create Card End-to-End
- * 
- * Tests the complete flow of creating a card:
- * 1. API receives POST request with valid card data
- * 2. Card is persisted in the database
- * 3. Card is returned in the response
- * 4. Realtime event 'card.created' is emitted to connected clients
- * 
- * Based on:
- * - contracts/card-api.md: POST /api/boards/:boardId/cards
- * - data-model.md: Card entity and validation rules
- * - Realtime contract: card.created event with { card: Card } payload
- */
+const realtime = vi.hoisted(() => ({
+  emitCardCreated: vi.fn(),
+  emitCardUpdated: vi.fn(),
+  emitCardDeleted: vi.fn(),
+}));
+
+vi.mock('../../backend/src/realtime/index.js', () => ({
+  getRealtime: () => realtime,
+}));
 
 describe('Create Card Integration Tests', () => {
-  let app: unknown;
-  let boardId: string;
-  let columnId: string;
-  let realtimeEvents: unknown[] = [];
+  let app: express.Application;
+  let db: Database;
 
-  beforeAll(async () => {
-    /**
-     * Setup:
-     * 1. Initialize the Express app
-     * 2. Create a test board
-     * 3. Create a test column
-     * 4. Setup realtime event listener
-     */
-    // TODO: Initialize Express app instance
-    // app = initializeApp();
-    
-    // TODO: Create test board via API or database
-    // const boardResponse = await request(app).post('/api/boards').send({ name: 'Test Board' });
-    // boardId = boardResponse.body.board.id;
-    
-    // TODO: Create test column via API or database
-    // const columnResponse = await request(app).post(`/api/boards/${boardId}/columns`).send({ name: 'Test Column' });
-    // columnId = columnResponse.body.column.id;
-    
-    // TODO: Setup realtime event listener
-    // realtimeManager.on('card.created', (event) => realtimeEvents.push(event));
+  beforeEach(async () => {
+    realtime.emitCardCreated.mockClear();
+    realtime.emitCardUpdated.mockClear();
+    realtime.emitCardDeleted.mockClear();
+    ({ app, db } = await createTestApp());
   });
 
-  afterAll(async () => {
-    /**
-     * Cleanup:
-     * 1. Delete test cards
-     * 2. Delete test column
-     * 3. Delete test board
-     */
-    // TODO: Cleanup database state
-  });
+  describe('POST /api/boards/:boardId/columns/:columnId/cards', () => {
+    it('rejects card creation without authentication', async () => {
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .send({ title: 'Unauthenticated Card' });
 
-  describe('POST /api/boards/:boardId/cards', () => {
-    it('should create a card with valid title and return 201', async () => {
-      /**
-       * Given: A valid card creation request
-       * When: POST /api/boards/:boardId/cards is called
-       * Then: Response status is 201
-       * And: Response body contains a card with all fields
-       */
-      const payload = {
-        title: 'Test Card',
-        columnId,
-      };
-
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(201);
-      
-      // expect(response.body.card).toBeDefined();
-      // expect(response.body.card.id).toBeDefined();
-      // expect(response.body.card.title).toBe('Test Card');
-      // expect(response.body.card.column_id).toBe(columnId);
-      // expect(response.body.card.board_id).toBe(boardId);
-      // expect(response.body.card.created_at).toBeDefined();
-      // expect(response.body.card.updated_at).toBeDefined();
-      
-      expect(payload.title).toBeDefined();
+      expect(res.status).toBe(401);
+      expect(res.body).toEqual({ error: 'Authentication required' });
+      expect(getCardCount(db)).toBe(0);
+      expect(realtime.emitCardCreated).not.toHaveBeenCalled();
     });
 
-    it('should persist card in database with correct data', async () => {
-      /**
-       * Given: A card has been created
-       * When: The card is retrieved from the database
-       * Then: All fields match the creation request
-       */
-      const payload = {
-        title: 'Persisted Card',
-        description: 'Test description',
-        columnId,
-      };
+    it('creates a card, persists it, and emits realtime card.created', async () => {
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: 'Integration Create', description: 'Created through API' });
 
-      // TODO: Implement actual test
-      // const createResponse = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(201);
-      
-      // const cardId = createResponse.body.card.id;
-      
-      // const getResponse = await request(app)
-      //   .get(`/api/cards/${cardId}`)
-      //   .expect(200);
-      
-      // expect(getResponse.body.card.title).toBe(payload.title);
-      // expect(getResponse.body.card.description).toBe(payload.description);
-      
-      expect(payload.title).toBeDefined();
+      expect(res.status).toBe(201);
+      expect(res.body.card).toMatchObject({
+        title: 'Integration Create',
+        description: 'Created through API',
+        position: 0,
+        column_id: COLUMN_ID,
+        board_id: BOARD_ID,
+        created_by: TEST_USER,
+      });
+      expect(res.body.card.id).toEqual(expect.any(String));
+      expect(res.body.card.created_at).toEqual(expect.any(String));
+      expect(res.body.card.updated_at).toEqual(expect.any(String));
+
+      const dbCard = getDbCard(db, res.body.card.id);
+      expect(dbCard).toMatchObject({
+        title: 'Integration Create',
+        description: 'Created through API',
+        position: 0,
+        column_id: COLUMN_ID,
+        board_id: BOARD_ID,
+        created_by: TEST_USER,
+      });
+      expect(getCardCount(db)).toBe(1);
+      expect(realtime.emitCardCreated).toHaveBeenCalledWith(BOARD_ID, COLUMN_ID, {
+        card: expect.objectContaining({ id: res.body.card.id, title: 'Integration Create' }),
+      });
     });
 
-    it('should emit realtime card.created event after card creation', async () => {
-      /**
-       * Given: A realtime event listener is attached
-       * When: A card is created
-       * Then: A 'card.created' event is emitted with the card data
-       */
-      const payload = {
-        title: 'Realtime Test Card',
-        columnId,
-      };
+    it('assigns the next position within the target column', async () => {
+      insertCard(db, {
+        id: '00000000-0000-4000-a000-000000000101',
+        title: 'Existing 0',
+        position: 0,
+      });
+      insertCard(db, {
+        id: '00000000-0000-4000-a000-000000000102',
+        title: 'Existing 1',
+        position: 1,
+      });
 
-      realtimeEvents = [];
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: 'Next Position' });
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(201);
-      
-      // // Wait for realtime event
-      // await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // expect(realtimeEvents).toHaveLength(1);
-      // expect(realtimeEvents[0].type).toBe('card.created');
-      // expect(realtimeEvents[0].card.id).toBe(response.body.card.id);
-      
-      expect(payload.title).toBeDefined();
+      expect(res.status).toBe(201);
+      expect(res.body.card.position).toBe(2);
+      expect(getDbCard(db, res.body.card.id)?.position).toBe(2);
     });
 
-    it('should calculate and assign correct position in column', async () => {
-      /**
-       * Given: Multiple cards exist in a column
-       * When: A new card is created
-       * Then: The new card's position is max(existing positions) + 1
-       */
-      // TODO: Implement actual test
-      // Create first card
-      // const card1 = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send({ title: 'Card 1', columnId })
-      //   .expect(201);
-      
-      // expect(card1.body.card.position).toBe(0); // First card
-      
-      // Create second card
-      // const card2 = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send({ title: 'Card 2', columnId })
-      //   .expect(201);
-      
-      // expect(card2.body.card.position).toBe(1); // Second card
-      
-      expect(true).toBe(true);
+    it('rejects a missing title and does not persist or emit realtime', async () => {
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ description: 'No title' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toContainEqual({ field: 'title', message: 'Title is required' });
+      expect(getCardCount(db)).toBe(0);
+      expect(realtime.emitCardCreated).not.toHaveBeenCalled();
     });
 
-    it('should reject request with missing title', async () => {
-      /**
-       * Given: A card creation request without title
-       * When: POST /api/boards/:boardId/cards is called
-       * Then: Response status is 400
-       * And: Error message indicates title is required
-       */
-      const payload = {
-        description: 'No title provided',
-        columnId,
-      };
+    it('rejects an empty title and does not persist or emit realtime', async () => {
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: '' });
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(400);
-      
-      // expect(response.body.errors).toContainEqual(
-      //   expect.objectContaining({ field: 'title', message: expect.stringContaining('required') })
-      // );
-      
-      expect((payload as Record<string, unknown>).title).not.toBeDefined();
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toContainEqual({ field: 'title', message: 'Title must be at least 1 character' });
+      expect(getCardCount(db)).toBe(0);
+      expect(realtime.emitCardCreated).not.toHaveBeenCalled();
     });
 
-    it('should reject request with title exceeding 255 characters', async () => {
-      /**
-       * Given: A card creation request with oversized title
-       * When: POST /api/boards/:boardId/cards is called
-       * Then: Response status is 400
-       * And: Error message indicates title exceeds max length
-       */
-      const payload = {
-        title: 'x'.repeat(256),
-        columnId,
-      };
+    it('rejects a title longer than 100 characters', async () => {
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: 'x'.repeat(101) });
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(400);
-      
-      // expect(response.body.errors).toContainEqual(
-      //   expect.objectContaining({ field: 'title', message: expect.stringContaining('255') })
-      // );
-      
-      expect(payload.title.length).toBeGreaterThan(255);
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toContainEqual({ field: 'title', message: 'Title must not exceed 100 characters' });
+      expect(getCardCount(db)).toBe(0);
+      expect(realtime.emitCardCreated).not.toHaveBeenCalled();
     });
 
-    it('should reject request with description exceeding 10000 characters', async () => {
-      /**
-       * Given: A card creation request with oversized description
-       * When: POST /api/boards/:boardId/cards is called
-       * Then: Response status is 400
-       * And: Error message indicates description exceeds max length
-       */
-      const payload = {
-        title: 'Valid Title',
-        description: 'x'.repeat(10001),
-        columnId,
-      };
+    it('rejects a description longer than 10000 characters', async () => {
+      const res = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: 'Valid Title', description: 'x'.repeat(10001) });
 
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(400);
-      
-      // expect(response.body.errors).toContainEqual(
-      //   expect.objectContaining({ field: 'description', message: expect.stringContaining('10000') })
-      // );
-      
-      expect(payload.description.length).toBeGreaterThan(10000);
+      expect(res.status).toBe(400);
+      expect(res.body.errors).toContainEqual({
+        field: 'description',
+        message: 'Description must not exceed 10000 characters',
+      });
+      expect(getCardCount(db)).toBe(0);
+      expect(realtime.emitCardCreated).not.toHaveBeenCalled();
     });
 
-    it('should include created_by from authenticated user', async () => {
-      /**
-       * Given: An authenticated request is made
-       * When: A card is created
-       * Then: The card's created_by field matches the authenticated user's ID
-       */
-      const payload = {
-        title: 'Test Card',
-        columnId,
-      };
-      const userId = 'user-authenticated-123';
+    it('rejects invalid board and column route parameters', async () => {
+      const boardRes = await request(app)
+        .post(`/api/boards/not-a-uuid/columns/${COLUMN_ID}/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: 'Invalid Board' });
+      expect(boardRes.status).toBe(400);
+      expect(boardRes.body.errors[0].field).toBe('boardId');
 
-      // TODO: Implement actual test with auth headers
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .set('Authorization', `Bearer ${authToken}`)
-      //   .send(payload)
-      //   .expect(201);
-      
-      // expect(response.body.card.created_by).toBe(userId);
-      
-      expect(payload.title).toBeDefined();
-      expect(userId).toBeDefined();
-    });
-
-    it('should set created_at and updated_at to current time', async () => {
-      /**
-       * Given: A card is created
-       * When: The creation request completes
-       * Then: created_at and updated_at are set to the current time (within 1 second)
-       */
-      const payload = {
-        title: 'Timestamp Test Card',
-        columnId,
-      };
-      const beforeTime = new Date();
-
-      // TODO: Implement actual test
-      // const response = await request(app)
-      //   .post(`/api/boards/${boardId}/cards`)
-      //   .send(payload)
-      //   .expect(201);
-      
-      // const afterTime = new Date();
-      // const createdAt = new Date(response.body.card.created_at);
-      // const updatedAt = new Date(response.body.card.updated_at);
-      
-      // expect(createdAt.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime() - 1000);
-      // expect(createdAt.getTime()).toBeLessThanOrEqual(afterTime.getTime() + 1000);
-      // expect(updatedAt.getTime()).toBe(createdAt.getTime());
-      
-      expect(beforeTime).toBeDefined();
+      const columnRes = await request(app)
+        .post(`/api/boards/${BOARD_ID}/columns/not-a-uuid/cards`)
+        .set('Authorization', AUTH_HEADER)
+        .send({ title: 'Invalid Column' });
+      expect(columnRes.status).toBe(400);
+      expect(columnRes.body.errors[0].field).toBe('columnId');
+      expect(getCardCount(db)).toBe(0);
     });
   });
 });
