@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AddCard } from '../card/AddCard.js';
 import { getCardsByColumn, Card } from '../../services/cardService.js';
 import CardDetailView from '../card/CardDetailView.js';
+import { onCardDeleted } from '../../realtime/cardEvents.js';
 
 /**
  * BoardView Component
@@ -68,6 +69,26 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
     loadCards();
   }, [boardId, columns]);
 
+  // Subscribe to realtime card:deleted events
+  useEffect(() => {
+    const unsub = onCardDeleted((payload) => {
+      setCardsByColumn((prev) => {
+        const next: Record<string, (Card | Record<string, unknown>)[]> = {};
+        for (const colId of Object.keys(prev)) {
+          next[colId] = (prev[colId] || []).filter(
+            (c) => (c as Card).id !== payload.cardId
+          );
+        }
+        return next;
+      });
+      // Close detail view if the deleted card is shown
+      if (selectedCardId === payload.cardId) {
+        setSelectedCardId(null);
+      }
+    });
+    return () => unsub();
+  }, [selectedCardId]);
+
   const handleCardCreated = (columnId: string, card: Record<string, unknown>) => {
     // Add the new card to the column
     setCardsByColumn((prev) => ({
@@ -114,6 +135,17 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
               const targetCol = updated.column_id;
               if (!next[targetCol]) next[targetCol] = [];
               next[targetCol] = [...next[targetCol], updated as Card];
+              return next;
+            });
+          }}
+          onCardDeleted={(payload) => {
+            setCardsByColumn((prev) => {
+              const next: Record<string, (Card | Record<string, unknown>)[]> = {};
+              for (const colId of Object.keys(prev)) {
+                next[colId] = (prev[colId] || []).filter(
+                  (c) => (c as Card).id !== payload.cardId
+                );
+              }
               return next;
             });
           }}

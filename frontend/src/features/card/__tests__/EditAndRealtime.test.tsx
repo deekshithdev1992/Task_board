@@ -71,4 +71,61 @@ describe('EditCard flow and realtime updates', () => {
 
     await waitFor(() => expect(screen.getByText('Realtime Updated')).toBeDefined());
   });
+
+  it('closes CardDetailView when current card is deleted by another user via realtime event', async () => {
+    const card = {
+      id: 'c1',
+      title: 'To Be Deleted',
+      description: 'Desc',
+      position: 1,
+      column_id: 'col1',
+      board_id: 'b1',
+    };
+
+    vi.spyOn(cardService, 'getCard').mockResolvedValue(card as any);
+
+    const onClose = vi.fn();
+
+    render((<CardDetailView cardId="c1" onClose={onClose} />) as any);
+
+    // wait for card to load
+    await waitFor(() => expect(screen.getByText('To Be Deleted')).toBeDefined());
+
+    // Emit realtime delete event
+    cardEvents.__emitCardDeletedForTest({
+      cardId: 'c1',
+      boardId: 'b1',
+      columnId: 'col1',
+    });
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('removes card from BoardView when realtime card.deleted event is received', async () => {
+    const columns = [{ id: 'col1', name: 'To Do' }];
+
+    const initialCard = {
+      id: 'c1',
+      title: 'Delete Me',
+      description: '',
+      position: 1,
+      column_id: 'col1',
+      board_id: 'b1',
+    };
+
+    vi.spyOn(cardService, 'getCardsByColumn').mockResolvedValue([initialCard] as any);
+
+    render((<BoardView boardId="b1" columns={columns} />) as any);
+
+    await waitFor(() => expect(screen.getByText('Delete Me')).toBeDefined());
+
+    // Emit realtime delete event
+    cardEvents.__emitCardDeletedForTest({
+      cardId: 'c1',
+      boardId: 'b1',
+      columnId: 'col1',
+    });
+
+    await waitFor(() => expect(screen.queryByText('Delete Me')).toBeNull());
+  });
 });

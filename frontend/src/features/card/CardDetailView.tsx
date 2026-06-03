@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { getCard, Card } from '../../services/cardService.js';
 import EditCard from './EditCard.js';
+import DeleteCard from './DeleteCard.js';
 
 export interface CardDetailViewProps {
   cardId: string;
   onClose: () => void;
   onCardUpdated?: (card: Record<string, unknown>) => void;
+  onCardDeleted?: (payload: { cardId: string; boardId: string; columnId: string }) => void;
 }
 
 export const CardDetailView: React.FC<CardDetailViewProps> = ({
   cardId,
   onClose,
   onCardUpdated,
+  onCardDeleted,
 }) => {
   const [card, setCard] = useState<Record<string, unknown> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,21 +38,29 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
     };
     load();
     // subscribe to realtime updates for this card
-    let unsub: (() => void) | null = null;
+    let unsubUpdated: (() => void) | null = null;
+    let unsubDeleted: (() => void) | null = null;
     let cardEvents: typeof import('../../realtime/cardEvents') | null = null;
     (async () => {
       cardEvents = await import('../../realtime/cardEvents');
-      unsub = cardEvents.onCardUpdated((payload) => {
+      unsubUpdated = cardEvents.onCardUpdated((payload) => {
         const updated = payload.card as unknown as Card;
         if (updated.id === cardId) {
           setCard(updated as unknown as Record<string, unknown>);
+        }
+      });
+      unsubDeleted = cardEvents.onCardDeleted((payload) => {
+        if (payload.cardId === cardId) {
+          if (onCardDeleted) onCardDeleted(payload);
+          onClose();
         }
       });
     })();
 
     return () => {
       mounted = false;
-      if (unsub) unsub();
+      if (unsubUpdated) unsubUpdated();
+      if (unsubDeleted) unsubDeleted();
     };
   }, [cardId]);
 
@@ -56,6 +68,17 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
     setCard(updatedCard);
     setIsEditing(false);
     if (onCardUpdated) onCardUpdated(updatedCard);
+  };
+
+  const handleDeleted = () => {
+    const cardData = card as unknown as Card;
+    const payload = {
+      cardId: cardData.id,
+      boardId: cardData.board_id,
+      columnId: cardData.column_id,
+    };
+    if (onCardDeleted) onCardDeleted(payload);
+    onClose();
   };
 
   if (isLoading) {
@@ -105,17 +128,32 @@ export const CardDetailView: React.FC<CardDetailViewProps> = ({
               <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
                 Edit
               </button>
+              <button className="btn btn-danger" onClick={() => setIsDeleting(true)}>
+                Delete
+              </button>
               <button className="btn btn-secondary" onClick={onClose}>
                 Close
               </button>
             </div>
+            {isDeleting && (
+              <div className="card-detail-delete">
+                <DeleteCard
+                  cardId={(card as unknown as Card).id}
+                  cardTitle={(card as unknown as Card).title}
+                  onDeleted={handleDeleted}
+                  onCancel={() => setIsDeleting(false)}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <EditCard
-            card={card as unknown as Card}
-            onUpdated={handleUpdated}
-            onCancel={() => setIsEditing(false)}
-          />
+          <div className="edit-card-section">
+            <EditCard
+              card={card as unknown as Card}
+              onUpdated={handleUpdated}
+              onCancel={() => setIsEditing(false)}
+            />
+          </div>
         )}
       </div>
     </div>

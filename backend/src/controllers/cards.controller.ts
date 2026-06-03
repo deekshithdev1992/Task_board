@@ -147,10 +147,34 @@ router.delete('/cards/:cardId', (req: Request, res: Response) => {
     }
 
     const { cardId } = req.params;
+
+    // Fetch card first to get board_id/column_id for realtime event
+    const existing = cardService.getCardById(cardId);
+    if (!existing) {
+      return res.status(404).json({ error: 'Card not found' });
+    }
+
+    const existingData = existing as Record<string, unknown>;
+    const boardId = existingData.board_id as string;
+    const columnId = existingData.column_id as string;
+
     const success = cardService.deleteCard(cardId);
 
     if (!success) {
       return res.status(404).json({ error: 'Card not found' });
+    }
+
+    // Emit realtime deleted event
+    try {
+      const realtimeManager = getRealtime();
+      realtimeManager.emitCardDeleted(boardId, columnId, {
+        cardId,
+        boardId,
+        columnId,
+      });
+    } catch (realtimeError) {
+      console.warn('Failed to emit realtime event:', realtimeError);
+      // Do not fail the request if realtime emission fails
     }
 
     res.status(204).send();
