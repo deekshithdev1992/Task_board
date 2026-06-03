@@ -64,35 +64,23 @@ Independent Test: Retrieve card details, update card via API or UI, and verify c
 
 Tests
 
-T019 [P] [US2] Contract test: tests/contract/test_card_update_contract.spec.ts (validate PUT /api/cards/)
+- [X] T019 [P] [US2] Contract test: tests/contract/test_card_update_contract.spec.ts (validate PUT /api/cards/)
+- [X] T020 [P] [US2] Integration test: tests/integration/test_edit_card.spec.ts (edit card end-to-end, verify DB and realtime event)
+- [X] T020A [P] [US2] Contract test: tests/contract/test_card_detail_contract.spec.ts (validate GET /api/cards/)
+- [X] T020B [P] [US2] Integration test: tests/integration/test_card_detail.spec.ts (retrieve card details and verify response data)
 
-T020 [P] [US2] Integration test: tests/integration/test_edit_card.spec.ts (edit card end-to-end, verify DB and realtime event)
+### Implementation
 
-T020A [P] [US2] Contract test: tests/contract/test_card_detail_contract.spec.ts (validate GET /api/cards/)
-
-T020B [P] [US2] Integration test: tests/integration/test_card_detail.spec.ts (retrieve card details and verify response data)
-
-Implementation
-
-T021 [US2] Implement PUT /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
-
-T022 [P] [US2] Implement backend update logic in backend/src/services/cardService.ts
-
-T023 [P] [US2] Emit realtime card.updated event after successful update in backend/src/realtime/index.ts
-
-T024 [P] [US2] Add frontend EditCard component in frontend/src/features/card/EditCard.tsx and integrate into Card detail view
-
-T024A [P] [US2] Implement GET /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
-
-T024B [P] [US2] Implement backend card detail retrieval logic in backend/src/services/cardService.ts
-
-T024C [US2] Implement Card Detail View component in frontend/src/features/card/CardDetailView.tsx
-
-T024D [US2] Allow users to open and view card details from BoardView.tsx
-
-T024E [P] [US2] Handle realtime card.updated events in frontend/src/realtime/cardEvents.ts and update visible card details
-
-T024F [P] [US2] Add frontend tests validating realtime card update behavior
+- [X] T021 [US2] Implement PUT /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
+- [X] T022 [P] [US2] Implement backend update logic in backend/src/services/cardService.ts
+- [X] T023 [P] [US2] Emit realtime card.updated event after successful update in backend/src/realtime/index.ts
+- [X] T024 [P] [US2] Add frontend EditCard component in frontend/src/features/card/EditCard.tsx and integrate into Card detail view
+- [X] T024A [P] [US2] Implement GET /api/cards/:cardId handler in backend/src/controllers/cards.controller.ts
+- [X] T024B [P] [US2] Implement backend card detail retrieval logic in backend/src/services/cardService.ts
+- [X] T024C [US2] Implement Card Detail View component in frontend/src/features/card/CardDetailView.tsx
+- [X] T024D [US2] Allow users to open and view card details from BoardView.tsx
+- [X] T024E [P] [US2] Handle realtime card.updated events in frontend/src/realtime/cardEvents.ts and update visible card details
+- [X] T024F [P] [US2] Add frontend tests validating realtime card update behavior
 
 Checkpoint: User Story 2 should be independently testable
 
