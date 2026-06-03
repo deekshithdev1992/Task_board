@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main, '002-card-crud']
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm run lint
+      - run: npm test

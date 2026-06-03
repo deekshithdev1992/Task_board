@@ -10,10 +10,10 @@ description: "Generated task list for Card CRUD feature"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 [P] Initialize frontend TypeScript project and scaffold files: frontend/package.json, frontend/tsconfig.json, frontend/src/main.tsx, frontend/public/index.html
-- [ ] T002 [P] Initialize backend TypeScript project and scaffold files: backend/package.json, backend/tsconfig.json, backend/src/server.ts, backend/src/routes.ts
-- [ ] T003 [P] Configure linting and formatting: .eslintrc.js, .prettierrc at repo root
-- [ ] T004 [P] Add CI workflow for tests and coverage: .github/workflows/ci.yml
+- [X] T001 [P] Initialize frontend TypeScript project and scaffold files: frontend/package.json, frontend/tsconfig.json, frontend/src/main.tsx, frontend/public/index.html
+- [X] T002 [P] Initialize backend TypeScript project and scaffold files: backend/package.json, backend/tsconfig.json, backend/src/server.ts, backend/src/routes.ts
+- [X] T003 [P] Configure linting and formatting: .eslintrc.js, .prettierrc at repo root
+- [X] T004 [P] Add CI workflow for tests and coverage: .github/workflows/ci.yml
 
 ---
 
