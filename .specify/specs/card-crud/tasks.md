@@ -21,12 +21,12 @@ description: "Generated task list for Card CRUD feature"
 
 **Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
-- [ ] T005 Setup database migrations and initial schema for `cards` and `columns` in backend/migrations/001_create_cards.sql
-- [ ] T006 [P] Implement backend Card model in backend/src/models/card.ts
-- [ ] T007 [P] Implement input validation and shared validators in backend/src/validation/cardValidation.ts
-- [ ] T008 [P] Implement basic authentication middleware in backend/src/middleware/auth.ts (stub to integrate existing auth system)
-- [ ] T009 [P] Setup realtime scaffold in backend/src/realtime/index.ts (Socket.IO server) and board-specific namespaces
-- [ ] T010 Implement base API routing and controllers file backend/src/controllers/cards.controller.ts (handlers to be filled per story)
+- [X] T005 Setup database migrations and initial schema for `cards` and `columns` in backend/migrations/001_create_cards.sql
+- [X] T006 [P] Implement backend Card model in backend/src/models/card.ts
+- [X] T007 [P] Implement input validation and shared validators in backend/src/validation/cardValidation.ts
+- [X] T008 [P] Implement basic authentication middleware in backend/src/middleware/auth.ts (stub to integrate existing auth system)
+- [X] T009 [P] Setup realtime scaffold in backend/src/realtime/index.ts (Socket.IO server) and board-specific namespaces
+- [X] T010 Implement base API routing and controllers file backend/src/controllers/cards.controller.ts (handlers to be filled per story)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -40,17 +40,17 @@ description: "Generated task list for Card CRUD feature"
 
 ### Tests
 
-- [ ] T011 [P] [US1] Contract test: tests/contract/test_card_create_contract.spec.ts (validate POST /api/boards/:boardId/cards response shape)
-- [ ] T012 [P] [US1] Integration test: tests/integration/test_create_card.spec.ts (create card end-to-end, verify DB and realtime event)
+- [X] T011 [P] [US1] Contract test: tests/contract/test_card_create_contract.spec.ts (validate POST /api/boards/:boardId/cards response shape)
+- [X] T012 [P] [US1] Integration test: tests/integration/test_create_card.spec.ts (create card end-to-end, verify DB and realtime event)
 
 ### Implementation
 
-- [ ] T013 [P] [US1] Implement `POST /api/boards/:boardId/cards` handler in backend/src/controllers/cards.controller.ts
-- [ ] T014 [P] [US1] Implement backend service to create card in backend/src/services/cardService.ts
-- [ ] T015 [P] [US1] Add Card model persistence in backend/src/models/card.ts (migration depends on T005)
-- [ ] T016 [P] [US1] Emit realtime `card.created` event from backend/src/realtime/index.ts after successful create
-- [ ] T017 [P] [US1] Add frontend `AddCard` component in frontend/src/features/card/AddCard.tsx and wire to `frontend/src/services/cardService.ts`
-- [ ] T018 [US1] Add UI integration: display created card in frontend/src/features/board/BoardView.tsx (depends on T017)
+- [X] T013 [P] [US1] Implement `POST /api/boards/:boardId/cards` handler in backend/src/controllers/cards.controller.ts
+- [X] T014 [P] [US1] Implement backend service to create card in backend/src/services/cardService.ts
+- [X] T015 [P] [US1] Add Card model persistence in backend/src/models/card.ts (migration depends on T005)
+- [X] T016 [P] [US1] Emit realtime `card.created` event from backend/src/realtime/index.ts after successful create
+- [X] T017 [P] [US1] Add frontend `AddCard` component in frontend/src/features/card/AddCard.tsx and wire to `frontend/src/services/cardService.ts`
+- [X] T018 [US1] Add UI integration: display created card in frontend/src/features/board/BoardView.tsx (depends on T017)
 
 **Checkpoint**: User Story 1 should be testable and demoable independently
 
