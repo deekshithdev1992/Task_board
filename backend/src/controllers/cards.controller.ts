@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { validateCreateCard, validateUpdateCard } from '../validation/cardValidation.js';
+import { validateParams } from '../middleware/validateParams.js';
 import { getRealtime } from '../realtime/index.js';
 
 const router = Router();
@@ -21,7 +22,7 @@ export function setCardService(service: CardService) {
 }
 
 // GET /api/boards/:boardId/columns/:columnId/cards
-router.get('/boards/:boardId/columns/:columnId/cards', (req: Request, res: Response) => {
+router.get('/boards/:boardId/columns/:columnId/cards', validateParams('boardId', 'columnId'), (req: Request, res: Response) => {
   try {
     if (!cardService) {
       return res.status(503).json({ error: 'Card service not initialized' });
@@ -37,7 +38,7 @@ router.get('/boards/:boardId/columns/:columnId/cards', (req: Request, res: Respo
 });
 
 // POST /api/boards/:boardId/columns/:columnId/cards
-router.post('/boards/:boardId/columns/:columnId/cards', (req: Request, res: Response) => {
+router.post('/boards/:boardId/columns/:columnId/cards', validateParams('boardId', 'columnId'), (req: Request, res: Response) => {
   try {
     if (!cardService) {
       return res.status(503).json({ error: 'Card service not initialized' });
@@ -78,7 +79,7 @@ router.post('/boards/:boardId/columns/:columnId/cards', (req: Request, res: Resp
 });
 
 // GET /api/cards/:cardId
-router.get('/cards/:cardId', (req: Request, res: Response) => {
+router.get('/cards/:cardId', validateParams('cardId'), (req: Request, res: Response) => {
   try {
     if (!cardService) {
       return res.status(503).json({ error: 'Card service not initialized' });
@@ -99,7 +100,7 @@ router.get('/cards/:cardId', (req: Request, res: Response) => {
 });
 
 // PUT /api/cards/:cardId
-router.put('/cards/:cardId', (req: Request, res: Response) => {
+router.put('/cards/:cardId', validateParams('cardId'), (req: Request, res: Response) => {
   try {
     if (!cardService) {
       return res.status(503).json({ error: 'Card service not initialized' });
@@ -140,7 +141,7 @@ router.put('/cards/:cardId', (req: Request, res: Response) => {
 });
 
 // DELETE /api/cards/:cardId
-router.delete('/cards/:cardId', (req: Request, res: Response) => {
+router.delete('/cards/:cardId', validateParams('cardId'), (req: Request, res: Response) => {
   try {
     if (!cardService) {
       return res.status(503).json({ error: 'Card service not initialized' });

@@ -1,5 +1,4 @@
 import React, { useState, FormEvent, ChangeEvent } from 'react';
-import { updateCard, UpdateCardInput } from '../../services/cardService.js';
 
 export interface EditCardProps {
   card: {
@@ -66,17 +65,46 @@ export const EditCard: React.FC<EditCardProps> = ({ card, onUpdated, onCancel })
     if (!validateForm()) return;
 
     setIsLoading(true);
+
     try {
       const payload: Record<string, unknown> = {};
       if (formData.title !== card.title) payload.title = formData.title;
       if (formData.description !== (card.description || ''))
         payload.description = formData.description;
 
-      const updated = await updateCard(card.id, payload as UpdateCardInput);
-      onUpdated(updated as unknown as Record<string, unknown>);
+      const response = await fetch(`/api/cards/${card.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as Record<string, unknown>;
+        if (errorData.errors) {
+          const fieldErrors: Record<string, string> = {};
+          (errorData.errors as Array<Record<string, unknown>>).forEach(
+            (error: Record<string, unknown>) => {
+              const field = error.field as string;
+              const message = error.message as string;
+              fieldErrors[field] = message;
+            },
+          );
+          if (Object.keys(fieldErrors).length > 0) {
+            setErrors(fieldErrors);
+            return;
+          }
+        }
+        setErrors({ submit: (errorData.error as string) || 'Failed to update card' });
+        return;
+      }
+
+      const data = (await response.json()) as { card: Record<string, unknown> };
+      onUpdated(data.card);
     } catch (err) {
-      console.error('Failed to update card', err);
-      setErrors({ submit: 'Failed to update card' });
+      console.error('Error updating card:', err);
+      setErrors({ submit: 'An error occurred while updating the card' });
     } finally {
       setIsLoading(false);
     }

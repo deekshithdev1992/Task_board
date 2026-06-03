@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AddCard } from '../card/AddCard.js';
 import { getCardsByColumn, Card } from '../../services/cardService.js';
 import CardDetailView from '../card/CardDetailView.js';
-import { onCardDeleted } from '../../realtime/cardEvents.js';
+import { onCardUpdated, onCardDeleted } from '../../realtime/cardEvents.js';
 
 /**
  * BoardView Component
@@ -68,6 +68,23 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
 
     loadCards();
   }, [boardId, columns]);
+
+  // Subscribe to realtime card:updated events
+  useEffect(() => {
+    const unsub = onCardUpdated((payload) => {
+      const updated = payload.card as unknown as Card;
+      setCardsByColumn((prev) => {
+        const next: Record<string, (Card | Record<string, unknown>)[]> = {};
+        for (const colId of Object.keys(prev)) {
+          next[colId] = (prev[colId] || []).map((c) =>
+            (c as Card).id === updated.id ? updated : c,
+          );
+        }
+        return next;
+      });
+    });
+    return () => unsub();
+  }, []);
 
   // Subscribe to realtime card:deleted events
   useEffect(() => {

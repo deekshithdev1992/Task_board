@@ -74,6 +74,12 @@ export function validateCreateCard(data: Record<string, unknown>): ValidationErr
     errors.push({ field: 'board_id', message: 'Board ID is required and must be a string' });
   }
 
+  if (data.position !== undefined) {
+    if (typeof data.position !== 'number' || data.position < 0) {
+      errors.push({ field: 'position', message: 'Position must be a non-negative number' });
+    }
+  }
+
   return errors;
 }
 
