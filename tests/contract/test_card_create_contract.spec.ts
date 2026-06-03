@@ -13,7 +13,7 @@ import { describe, it, expect } from 'vitest';
  * 
  * Card schema (from data-model.md):
  *   id: UUID
- *   title: string (required, max 255)
+ *   title: string (required, max 100)
  *   description?: string (optional)
  *   position: number
  *   column_id: UUID
@@ -72,15 +72,15 @@ describe('Card Create API Contract', () => {
     it('should validate title is required and non-empty', () => {
       /**
        * Validation Rule (from data-model.md):
-       * title: required, non-empty, max length 255
+       * title: required, non-empty, max length 100
        */
       const validTitle = 'A';
-      const validTitleMax = 'x'.repeat(255);
+      const validTitleMax = 'x'.repeat(100);
       const invalidEmptyTitle = '';
 
       expect(validTitle.length).toBeGreaterThan(0);
-      expect(validTitle.length).toBeLessThanOrEqual(255);
-      expect(validTitleMax.length).toBeLessThanOrEqual(255);
+      expect(validTitle.length).toBeLessThanOrEqual(100);
+      expect(validTitleMax.length).toBeLessThanOrEqual(100);
       expect(invalidEmptyTitle.length).toBe(0); // Should fail validation
     });
 
@@ -137,15 +137,15 @@ describe('Card Create API Contract', () => {
       });
     });
 
-    it('should return error when title exceeds 255 characters', () => {
+    it('should return error when title exceeds 100 characters', () => {
       /**
        * Validation Error Scenario:
-       * When title is longer than 255 characters
+       * When title is longer than 100 characters
        * Then the API should return 400 Bad Request
        */
-      const oversizedTitle = 'x'.repeat(256);
+      const oversizedTitle = 'x'.repeat(101);
 
-      expect(oversizedTitle.length).toBeGreaterThan(255);
+      expect(oversizedTitle.length).toBeGreaterThan(100);
     });
 
     it('should return error when description exceeds 10000 characters', () => {

@@ -26,8 +26,8 @@ export const EditCard: React.FC<EditCardProps> = ({ card, onUpdated, onCancel })
 
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
-    } else if (formData.title.length > 255) {
-      newErrors.title = 'Title must be 255 characters or less';
+    } else if (formData.title.length > 100) {
+      newErrors.title = 'Title must be 100 characters or less';
     }
 
     if (formData.description.length > 10000) {
@@ -119,12 +119,13 @@ export const EditCard: React.FC<EditCardProps> = ({ card, onUpdated, onCancel })
           type="text"
           value={formData.title}
           onChange={handleTitleChange}
-          maxLength={255}
+          maxLength={100}
           disabled={isLoading}
           aria-invalid={!!errors.title}
+          aria-describedby={errors.title ? 'edit-title-error' : undefined}
           className={errors.title ? 'input-error' : ''}
         />
-        {errors.title && <span className="error-message">{errors.title}</span>}
+        {errors.title && <span id="edit-title-error" className="error-message">{errors.title}</span>}
       </div>
 
       <div className="form-group">
@@ -137,11 +138,13 @@ export const EditCard: React.FC<EditCardProps> = ({ card, onUpdated, onCancel })
           disabled={isLoading}
           rows={4}
           className={errors.description ? 'input-error' : ''}
+          aria-invalid={!!errors.description}
+          aria-describedby={errors.description ? 'edit-description-error' : undefined}
         />
-        {errors.description && <span className="error-message">{errors.description}</span>}
+        {errors.description && <span id="edit-description-error" className="error-message">{errors.description}</span>}
       </div>
 
-      {errors.submit && <div className="error-message">{errors.submit}</div>}
+      {errors.submit && <div className="error-message" role="alert">{errors.submit}</div>}
 
       <div className="form-actions">
         <button type="submit" className="btn btn-primary" disabled={isLoading}>

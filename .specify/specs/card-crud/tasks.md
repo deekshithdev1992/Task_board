@@ -121,11 +121,11 @@ Checkpoint: User Story 3 should be independently testable
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T031 [P] Add accessibility checks and fixes for card UI in frontend/src/features/card/ (WCAG 2.1 AA)
-- [ ] T032 [P] Add unit tests for services and models in tests/unit/
-- [ ] T033 [P] Add security validation and hardening in backend/src/middleware/
-- [ ] T034 Update documentation in .specify/specs/card-crud/quickstart.md and README.md
-- [ ] T035 [P] Performance tuning for realtime delivery (profile and optimize message paths)
+- [X] T031 [P] Add accessibility checks and fixes for card UI in frontend/src/features/card/ (WCAG 2.1 AA)
+- [X] T032 [P] Add unit tests for services and models in tests/unit/
+- [X] T033 [P] Add security validation and hardening in backend/src/middleware/
+- [X] T034 Update documentation in .specify/specs/card-crud/quickstart.md and README.md
+- [X] T035 [P] Performance tuning for realtime delivery (profile and optimize message paths)
 
 ## Validation Tasks
 
@@ -135,7 +135,7 @@ T037 Verify users can open and view card details from the board
 
 T038 Validate SC-004 by testing create, edit, and delete workflows and confirming at least 90% of users complete these actions successfully on their first attempt
 
-T039 Execute 10 validation scenarios covering create, edit, and delete workflows and confirm at least 90% first-attempt success rate (SC-004)
+- [X] T039 Execute 10 validation scenarios covering create, edit, and delete workflows and confirm at least 90% first-attempt success rate (SC-004)
 
 T040 Validate title field rules (required, minimum 1 character, maximum 100 characters) across frontend and backend validation
 ---

@@ -33,8 +33,8 @@ describe('validateCardTitle', () => {
     expect(errors[0].message).toContain('at least');
   });
 
-  it('returns error when title exceeds 255 characters', () => {
-    const errors = validateCardTitle('x'.repeat(256));
+  it('returns error when title exceeds 100 characters', () => {
+    const errors = validateCardTitle('x'.repeat(101));
     expect(errors).toHaveLength(1);
     expect(errors[0].message).toContain('not exceed');
   });
@@ -45,7 +45,7 @@ describe('validateCardTitle', () => {
   });
 
   it('passes for valid title at max length', () => {
-    const errors = validateCardTitle('x'.repeat(255));
+    const errors = validateCardTitle('x'.repeat(100));
     expect(errors).toHaveLength(0);
   });
 

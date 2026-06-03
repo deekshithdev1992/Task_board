@@ -6,7 +6,7 @@ import React, { useState, FormEvent, ChangeEvent } from 'react';
  * Provides UI for creating a new card in a column.
  *
  * Features:
- * - Text input for card title (required, max 255 chars)
+ * - Text input for card title (required, max 100 chars)
  * - Text area for optional description (max 10000 chars)
  * - Submit and cancel buttons
  * - Form validation
@@ -51,8 +51,8 @@ export const AddCard: React.FC<AddCardProps> = ({
 
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
-    } else if (formData.title.length > 255) {
-      newErrors.title = 'Title must be 255 characters or less';
+    } else if (formData.title.length > 100) {
+      newErrors.title = 'Title must be 100 characters or less';
     }
 
     if (formData.description.length > 10000) {
@@ -156,7 +156,7 @@ export const AddCard: React.FC<AddCardProps> = ({
           value={formData.title}
           onChange={handleTitleChange}
           placeholder="Enter card title"
-          maxLength={255}
+          maxLength={100}
           disabled={isLoading}
           aria-invalid={!!errors.title}
           aria-describedby={errors.title ? 'title-error' : undefined}
@@ -168,7 +168,7 @@ export const AddCard: React.FC<AddCardProps> = ({
           </span>
         )}
         <span className="character-count">
-          {formData.title.length}/255 characters
+          {formData.title.length}/100 characters
         </span>
       </div>
 

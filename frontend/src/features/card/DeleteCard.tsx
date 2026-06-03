@@ -34,7 +34,7 @@ export const DeleteCard: React.FC<DeleteCardProps> = ({
   return (
     <div className="delete-card-confirmation">
       <p>Are you sure you want to delete <strong>{cardTitle}</strong>?</p>
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-message" role="alert">{error}</div>}
       <div className="form-actions">
         <button
           className="btn btn-danger"

@@ -13,7 +13,7 @@ import { describe, it, expect } from 'vitest';
  * - DELETE /api/cards/:cardId
  *
  * Validation rules (from data-model.md):
- * - title: required, non-empty, max 255 chars
+ * - title: required, non-empty, max 100 chars
  * - description: optional, max 10000 chars
  * - position: non-negative number
  * - cardId/boardId/columnId: UUID format
@@ -64,9 +64,9 @@ describe('Card Validation API Contract', () => {
       expect(payload.title.length).toBe(0);
     });
 
-    it('should reject request with title exceeding 255 characters', () => {
-      const payload = { title: 'x'.repeat(256) };
-      expect(payload.title.length).toBeGreaterThan(255);
+    it('should reject request with title exceeding 100 characters', () => {
+      const payload = { title: 'x'.repeat(101) };
+      expect(payload.title.length).toBeGreaterThan(100);
     });
 
     it('should reject request with description exceeding 10000 characters', () => {
@@ -99,9 +99,9 @@ describe('Card Validation API Contract', () => {
       expect(Object.keys(payload)).toHaveLength(0);
     });
 
-    it('should reject title exceeding 255 characters', () => {
-      const payload = { title: 'x'.repeat(256) };
-      expect(payload.title.length).toBeGreaterThan(255);
+    it('should reject title exceeding 100 characters', () => {
+      const payload = { title: 'x'.repeat(101) };
+      expect(payload.title.length).toBeGreaterThan(100);
     });
 
     it('should reject description exceeding 10000 characters', () => {

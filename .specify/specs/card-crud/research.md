@@ -16,14 +16,15 @@ Generated: 2026-06-03
 
 ## Decision: Storage
 
-- Decision: PostgreSQL for relational storage of cards and board metadata.
-- Rationale: Strong ACID guarantees, mature migrations tooling, and good fit for relational data such as boards/columns/cards.
-- Alternatives: MongoDB (rejected for stronger consistency needs) or in-memory stores (not suitable for persistence).
+- Decision: SQLite (sql.js) for relational storage of cards and board metadata (in-memory).
+- Rationale: Simple local development, no external database setup, auto-seeded on startup. Sufficient for project scope (boards with up to 100 cards, up to 20 concurrent users).
+- Alternatives: PostgreSQL (initially considered — rejected for development complexity); MongoDB (rejected for stronger consistency needs).
+- **Note**: spec.md and data-model.md reference PostgreSQL; the final implementation uses sql.js for simplicity.
 
 ## Decision: Testing
 
-- Decision: Jest for unit tests, React Testing Library for frontend components, and supertest for HTTP integration tests. Enforce coverage checks in CI to meet constitution gate (80%).
-- Rationale: Jest is already standard for TypeScript/React stacks and integrates with coverage reporting.
+- Decision: Vitest for unit tests (replaces Jest), React Testing Library for frontend components, and supertest for HTTP integration tests. Enforce coverage checks in CI to meet constitution gate (80%).
+- Rationale: Vitest provides native TypeScript support, faster execution via esbuild transform, and compatibility with Jest API. React Testing Library is standard for component testing. Supertest enables HTTP integration tests without a running server.
 
 ## Decision: Realtime Synchronization Pattern
 

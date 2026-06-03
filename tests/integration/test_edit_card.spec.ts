@@ -184,7 +184,7 @@ describe('Edit Card Integration Tests', () => {
       expect(payload.title).toBeDefined();
     });
 
-    it('should reject request with title exceeding 255 characters', async () => {
+    it('should reject request with title exceeding 100 characters', async () => {
       /**
        * Given: An existing card
        * When: PUT /api/cards/:cardId is called with an oversized title
@@ -192,7 +192,7 @@ describe('Edit Card Integration Tests', () => {
        * And: Error message indicates title exceeds max length
        */
       const payload = {
-        title: 'x'.repeat(256),
+        title: 'x'.repeat(101),
       };
 
       // TODO: Implement actual test
@@ -202,10 +202,10 @@ describe('Edit Card Integration Tests', () => {
       //   .expect(400);
 
       // expect(response.body.errors).toContainEqual(
-      //   expect.objectContaining({ field: 'title', message: expect.stringContaining('255') })
+      //   expect.objectContaining({ field: 'title', message: expect.stringContaining('100') })
       // );
 
-      expect(payload.title.length).toBeGreaterThan(255);
+      expect(payload.title.length).toBeGreaterThan(100);
     });
 
     it('should reject request with invalid position', async () => {

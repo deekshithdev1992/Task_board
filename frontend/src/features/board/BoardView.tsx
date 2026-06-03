@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { AddCard } from '../card/AddCard.js';
 import { getCardsByColumn, Card } from '../../services/cardService.js';
 import CardDetailView from '../card/CardDetailView.js';
-import { onCardUpdated, onCardDeleted } from '../../realtime/cardEvents.js';
+import {
+  initRealtime,
+  cleanupRealtime,
+  onCardCreated,
+  onCardUpdated,
+  onCardDeleted,
+} from '../../realtime/cardEvents.js';
 
 /**
  * BoardView Component
@@ -38,6 +44,11 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
   const [isLoadingColumn, setIsLoadingColumn] = useState<Record<string, boolean>>({});
   const [showAddCardForm, setShowAddCardForm] = useState<Record<string, boolean>>({});
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const boardIdRef = useRef(boardId);
+  boardIdRef.current = boardId;
+  const selectedCardIdRef = useRef(selectedCardId);
+  selectedCardIdRef.current = selectedCardId;
+  const cardTriggerRef = useRef<HTMLElement | null>(null);
 
   // Load cards for all columns on mount
   useEffect(() => {
@@ -69,10 +80,36 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
     loadCards();
   }, [boardId, columns]);
 
+  // Initialize realtime connection for this board
+  useEffect(() => {
+    initRealtime(boardId);
+    return () => {
+      cleanupRealtime(boardId);
+    };
+  }, [boardId]);
+
+  // Subscribe to realtime card:created events
+  useEffect(() => {
+    const unsub = onCardCreated((payload) => {
+      const created = payload.card as unknown as Card;
+      if (created.board_id !== boardIdRef.current) return;
+      const columnId = created.column_id;
+      if (columnId) {
+        setCardsByColumn((prev) => {
+          const existing = prev[columnId] || [];
+          if (existing.some((c) => (c as Card).id === created.id)) return prev;
+          return { ...prev, [columnId]: [...existing, created as Card] };
+        });
+      }
+    });
+    return () => unsub();
+  }, []);
+
   // Subscribe to realtime card:updated events
   useEffect(() => {
     const unsub = onCardUpdated((payload) => {
       const updated = payload.card as unknown as Card;
+      if (updated.board_id !== boardIdRef.current) return;
       setCardsByColumn((prev) => {
         const next: Record<string, (Card | Record<string, unknown>)[]> = {};
         for (const colId of Object.keys(prev)) {
@@ -89,6 +126,7 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
   // Subscribe to realtime card:deleted events
   useEffect(() => {
     const unsub = onCardDeleted((payload) => {
+      if (payload.boardId !== boardIdRef.current) return;
       setCardsByColumn((prev) => {
         const next: Record<string, (Card | Record<string, unknown>)[]> = {};
         for (const colId of Object.keys(prev)) {
@@ -99,12 +137,12 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
         return next;
       });
       // Close detail view if the deleted card is shown
-      if (selectedCardId === payload.cardId) {
+      if (selectedCardIdRef.current === payload.cardId) {
         setSelectedCardId(null);
       }
     });
     return () => unsub();
-  }, [selectedCardId]);
+  }, []);
 
   const handleCardCreated = (columnId: string, card: Record<string, unknown>) => {
     // Add the new card to the column
@@ -136,7 +174,10 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
       {selectedCardId && (
         <CardDetailView
           cardId={selectedCardId}
-          onClose={() => setSelectedCardId(null)}
+          onClose={() => {
+            setSelectedCardId(null);
+            setTimeout(() => cardTriggerRef.current?.focus(), 0);
+          }}
           onCardUpdated={(updatedCard) => {
             const updated = updatedCard as unknown as Card;
             setCardsByColumn((prev) => {
@@ -191,9 +232,15 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
                       className="card"
                       role="button"
                       tabIndex={0}
-                      onClick={() => setSelectedCardId(card.id)}
+                      onClick={(e) => {
+                        cardTriggerRef.current = e.currentTarget;
+                        setSelectedCardId(card.id);
+                      }}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') setSelectedCardId(card.id);
+                        if (e.key === 'Enter') {
+                          cardTriggerRef.current = e.currentTarget;
+                          setSelectedCardId(card.id);
+                        }
                       }}
                     >
                       <div className="card-header">

@@ -109,9 +109,15 @@ export class CardService {
       return null;
     }
 
+    // Whitelist allowed fields to prevent field injection
+    const allowed: Record<string, unknown> = {};
+    if (input.title !== undefined) allowed.title = input.title;
+    if (input.description !== undefined) allowed.description = input.description;
+    if (input.position !== undefined) allowed.position = input.position;
+
     const updated = {
       ...card,
-      ...input,
+      ...allowed,
       updated_at: new Date().toISOString(),
     };
 
