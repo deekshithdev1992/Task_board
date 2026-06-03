@@ -1,10 +1,10 @@
 import BoardView from './features/board/BoardView.js';
 
-const BOARD_ID = 'demo-board-001';
+const BOARD_ID = '00000000-0000-4000-a000-000000000001';
 const COLUMNS = [
-  { id: 'col-todo', name: 'To Do' },
-  { id: 'col-progress', name: 'In Progress' },
-  { id: 'col-done', name: 'Done' },
+  { id: '00000000-0000-4000-a000-000000000010', name: 'To Do' },
+  { id: '00000000-0000-4000-a000-000000000020', name: 'In Progress' },
+  { id: '00000000-0000-4000-a000-000000000030', name: 'Done' },
 ];
 
 export default function App() {

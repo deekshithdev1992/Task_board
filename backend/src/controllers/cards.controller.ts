@@ -7,12 +7,12 @@ const router = Router();
 
 // Placeholder for Card Service (to be injected)
 interface CardService {
-  createCard: (data: Record<string, unknown>) => Record<string, unknown>;
-  getCardById: (id: string) => Record<string, unknown> | null;
-  updateCard: (id: string, data: Record<string, unknown>) => Record<string, unknown> | null;
-  deleteCard: (id: string) => boolean;
-  getCardsByBoardId: (boardId: string) => Record<string, unknown>[];
-  getCardsByColumnId: (columnId: string) => Record<string, unknown>[];
+  createCard(data: Record<string, unknown>): Record<string, unknown>;
+  getCardById(id: string): Record<string, unknown> | null;
+  updateCard(id: string, data: Record<string, unknown>): Record<string, unknown> | null;
+  deleteCard(id: string): boolean;
+  getCardsByBoardId(boardId: string): Record<string, unknown>[];
+  getCardsByColumnId(columnId: string): Record<string, unknown>[];
 }
 
 let cardService: CardService | null = null;
@@ -56,10 +56,11 @@ router.post('/boards/:boardId/columns/:columnId/cards', validateParams('boardId'
     }
 
     const card = cardService.createCard({
-      ...req.body,
-      board_id: boardId,
-      column_id: columnId,
-      created_by: req.userId,
+      title: req.body.title as string,
+      description: req.body.description as string | undefined,
+      columnId,
+      boardId,
+      userId: req.userId,
     });
 
     // Emit realtime event
