@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AddCard } from '../card/AddCard.js';
 import { getCardsByColumn, Card } from '../../services/cardService.js';
+import CardDetailView from '../card/CardDetailView.js';
 
 /**
  * BoardView Component
@@ -35,6 +36,7 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
   >({});
   const [isLoadingColumn, setIsLoadingColumn] = useState<Record<string, boolean>>({});
   const [showAddCardForm, setShowAddCardForm] = useState<Record<string, boolean>>({});
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // Load cards for all columns on mount
   useEffect(() => {
@@ -93,6 +95,31 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
         <h1>Task Board</h1>
       </div>
 
+      {selectedCardId && (
+        <CardDetailView
+          cardId={selectedCardId}
+          onClose={() => setSelectedCardId(null)}
+          onCardUpdated={(updatedCard) => {
+            const updated = updatedCard as unknown as Card;
+            setCardsByColumn((prev) => {
+              const next: Record<string, (Card | Record<string, unknown>)[]> = {};
+              for (const col of columns) {
+                next[col.id] = [];
+              }
+              for (const colId of Object.keys(prev)) {
+                next[colId] = (prev[colId] || []).filter(
+                  (c) => (c as Card).id !== updated.id,
+                );
+              }
+              const targetCol = updated.column_id;
+              if (!next[targetCol]) next[targetCol] = [];
+              next[targetCol] = [...next[targetCol], updated as Card];
+              return next;
+            });
+          }}
+        />
+      )}
+
       <div className="columns-container">
         {columns.map((column) => (
           <div key={column.id} className="column">
@@ -110,7 +137,16 @@ export const BoardView: React.FC<BoardViewProps> = ({ boardId, columns }) => {
                 (cardsByColumn[column.id] || []).map((cardData) => {
                   const card = cardData as Card;
                   return (
-                    <div key={card.id} className="card">
+                    <div
+                      key={card.id}
+                      className="card"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelectedCardId(card.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') setSelectedCardId(card.id);
+                      }}
+                    >
                       <div className="card-header">
                         <h3>{card.title}</h3>
                       </div>

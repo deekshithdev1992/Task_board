@@ -118,6 +118,20 @@ router.put('/cards/:cardId', (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Card not found' });
     }
 
+    // Emit realtime updated event
+    try {
+      const realtimeManager = getRealtime();
+      const cardData = card as Record<string, unknown>;
+      realtimeManager.emitCardUpdated(
+        cardData.board_id as string,
+        cardData.column_id as string,
+        { card },
+      );
+    } catch (realtimeError) {
+      console.warn('Failed to emit realtime event:', realtimeError);
+      // Do not fail the request if realtime emission fails
+    }
+
     res.json({ card });
   } catch (error) {
     console.error('Error updating card:', error);
